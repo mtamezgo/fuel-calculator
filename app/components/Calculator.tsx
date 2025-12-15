@@ -1,0 +1,723 @@
+import { useState, useEffect, useRef } from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from "~/components/ui/table";
+import { GripVertical, Trash2, Plus, Share2 } from "lucide-react";
+import html2canvas from "html2canvas";
+
+// Constants
+const LITERS_PER_GALLON = 3.78541;
+
+// Types
+interface Concept {
+  id: number;
+  name: string;
+  value: number;
+  inputType: "mxnLtr" | "mxn" | "usd" | "usdGal";
+  isBase?: boolean;
+}
+
+interface Preset {
+  id: string;
+  name: string;
+  exchangeRate: number;
+  basePrice: number;
+  gallons: number;
+  liters: number;
+  margin: number;
+  marginInputType: string;
+  concepts: Concept[];
+}
+
+export function Calculator() {
+  // State
+  const [exchangeRate, setExchangeRate] = useState(0);
+  const [basePrice, setBasePrice] = useState(0);
+  const [gallons, setGallons] = useState(0);
+  const [liters, setLiters] = useState(0);
+  const [concepts, setConcepts] = useState<Concept[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState("");
+  const [presetName, setPresetName] = useState("");
+  const [decimalPlaces, setDecimalPlaces] = useState(4);
+  const [margin, setMargin] = useState(0);
+  const [marginInputType, setMarginInputType] = useState<"mxnLtr" | "mxn" | "usd" | "usdGal">("mxnLtr");
+  const [draggedRow, setDraggedRow] = useState<number | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  // Initialize with base concept
+  useEffect(() => {
+    if (concepts.length === 0) {
+      setConcepts([{
+        id: Date.now(),
+        name: "Molecule Price",
+        value: 0,
+        inputType: "usdGal",
+        isBase: true,
+      }]);
+    }
+  }, []);
+
+  // Load presets from API
+  useEffect(() => {
+    loadPresets();
+  }, []);
+
+  async function loadPresets() {
+    try {
+      const response = await fetch("/api/presets");
+      if (response.ok) {
+        const data = await response.json();
+        setPresets(data);
+      }
+    } catch (error) {
+      console.error("Failed to load presets:", error);
+    }
+  }
+
+  // Conversion functions
+  const gallonsToLiters = (gal: number) => gal * LITERS_PER_GALLON;
+  const litersToGallons = (ltr: number) => ltr / LITERS_PER_GALLON;
+  const usdToMxn = (usd: number, rate: number) => usd * rate;
+  const mxnToUsd = (mxn: number, rate: number) => mxn / rate;
+  const usdPerGalToMxnPerLtr = (usdGal: number, rate: number) => (usdGal / LITERS_PER_GALLON) * rate;
+  const mxnPerLtrToUsdPerGal = (mxnLtr: number, rate: number) => (mxnLtr / rate) * LITERS_PER_GALLON;
+
+  // Format number with commas
+  const formatNumber = (value: number, decimals?: number) => {
+    const places = decimals !== undefined ? decimals : decimalPlaces;
+    const formatted = parseFloat(String(value)).toFixed(places);
+    const parts = formatted.split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+  };
+
+  const parseFormattedNumber = (value: string | number) => {
+    if (typeof value === "number") return value;
+    return parseFloat(value.toString().replace(/,/g, "")) || 0;
+  };
+
+  // Calculate values for concept
+  const calculateMxnLtr = (concept: Concept) => {
+    if (concept.isBase) {
+      return usdPerGalToMxnPerLtr(basePrice, exchangeRate);
+    }
+    switch (concept.inputType) {
+      case "mxnLtr": return concept.value;
+      case "mxn": return liters ? concept.value / liters : 0;
+      case "usd": return liters ? usdToMxn(concept.value, exchangeRate) / liters : 0;
+      case "usdGal": return usdPerGalToMxnPerLtr(concept.value, exchangeRate);
+      default: return 0;
+    }
+  };
+
+  const calculateMxn = (concept: Concept) => {
+    if (concept.isBase) {
+      return calculateMxnLtr(concept) * liters;
+    }
+    switch (concept.inputType) {
+      case "mxnLtr": return concept.value * liters;
+      case "mxn": return concept.value;
+      case "usd": return usdToMxn(concept.value, exchangeRate);
+      case "usdGal": return usdPerGalToMxnPerLtr(concept.value, exchangeRate) * liters;
+      default: return 0;
+    }
+  };
+
+  const calculateUsd = (concept: Concept) => {
+    if (concept.isBase) {
+      return basePrice * gallons;
+    }
+    switch (concept.inputType) {
+      case "mxnLtr": return mxnToUsd(concept.value * liters, exchangeRate);
+      case "mxn": return mxnToUsd(concept.value, exchangeRate);
+      case "usd": return concept.value;
+      case "usdGal": return concept.value * gallons;
+      default: return 0;
+    }
+  };
+
+  const calculateUsdGal = (concept: Concept) => {
+    if (concept.isBase) return basePrice;
+    switch (concept.inputType) {
+      case "mxnLtr": return mxnPerLtrToUsdPerGal(concept.value, exchangeRate);
+      case "mxn": return gallons ? mxnToUsd(concept.value, exchangeRate) / gallons : 0;
+      case "usd": return gallons ? concept.value / gallons : 0;
+      case "usdGal": return concept.value;
+      default: return 0;
+    }
+  };
+
+  // Calculate totals
+  const totals = concepts.reduce(
+    (acc, concept) => ({
+      mxnLtr: acc.mxnLtr + calculateMxnLtr(concept),
+      mxn: acc.mxn + calculateMxn(concept),
+      usd: acc.usd + calculateUsd(concept),
+      usdGal: acc.usdGal + calculateUsdGal(concept),
+    }),
+    { mxnLtr: 0, mxn: 0, usd: 0, usdGal: 0 }
+  );
+
+  // Calculate margin values
+  const calculateMarginValue = (type: "mxnLtr" | "mxn" | "usd" | "usdGal") => {
+    switch (marginInputType) {
+      case "mxnLtr":
+        if (type === "mxnLtr") return margin;
+        if (type === "mxn") return margin * liters;
+        if (type === "usd") return mxnToUsd(margin * liters, exchangeRate);
+        if (type === "usdGal") return mxnPerLtrToUsdPerGal(margin, exchangeRate);
+        break;
+      case "mxn":
+        if (type === "mxnLtr") return liters ? margin / liters : 0;
+        if (type === "mxn") return margin;
+        if (type === "usd") return mxnToUsd(margin, exchangeRate);
+        if (type === "usdGal") return gallons ? mxnToUsd(margin, exchangeRate) / gallons : 0;
+        break;
+      case "usd":
+        if (type === "mxnLtr") return liters ? usdToMxn(margin, exchangeRate) / liters : 0;
+        if (type === "mxn") return usdToMxn(margin, exchangeRate);
+        if (type === "usd") return margin;
+        if (type === "usdGal") return gallons ? margin / gallons : 0;
+        break;
+      case "usdGal":
+        if (type === "mxnLtr") return usdPerGalToMxnPerLtr(margin, exchangeRate);
+        if (type === "mxn") return usdPerGalToMxnPerLtr(margin, exchangeRate) * liters;
+        if (type === "usd") return margin * gallons;
+        if (type === "usdGal") return margin;
+        break;
+    }
+    return 0;
+  };
+
+  const marginValues = {
+    mxnLtr: calculateMarginValue("mxnLtr"),
+    mxn: calculateMarginValue("mxn"),
+    usd: calculateMarginValue("usd"),
+    usdGal: calculateMarginValue("usdGal"),
+  };
+
+  // Sale price = totals + margin
+  const salePrice = {
+    mxnLtr: totals.mxnLtr + marginValues.mxnLtr,
+    mxn: totals.mxn + marginValues.mxn,
+    usd: totals.usd + marginValues.usd,
+    usdGal: totals.usdGal + marginValues.usdGal,
+  };
+
+  // Event handlers
+  const handleExchangeRateFetch = async () => {
+    try {
+      const response = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+      const data = await response.json();
+      setExchangeRate(data.rates.MXN);
+    } catch (error) {
+      console.error("Failed to fetch exchange rate:", error);
+      alert("Failed to fetch exchange rate. Please enter manually.");
+    }
+  };
+
+  const handleGallonsChange = (value: number) => {
+    setGallons(value);
+    setLiters(gallonsToLiters(value));
+  };
+
+  const handleLitersChange = (value: number) => {
+    setLiters(value);
+    setGallons(litersToGallons(value));
+  };
+
+  const addConcept = () => {
+    setConcepts([...concepts, {
+      id: Date.now(),
+      name: "New Cost",
+      value: 0,
+      inputType: "mxnLtr",
+    }]);
+  };
+
+  const deleteConcept = (id: number) => {
+    setConcepts(concepts.filter(c => c.id !== id));
+  };
+
+  const updateConceptName = (id: number, name: string) => {
+    setConcepts(concepts.map(c => c.id === id ? { ...c, name } : c));
+  };
+
+  const updateConceptValue = (id: number, value: string, inputType: "mxnLtr" | "mxn" | "usd" | "usdGal") => {
+    const numValue = parseFormattedNumber(value);
+    setConcepts(concepts.map(c => c.id === id ? { ...c, value: numValue, inputType } : c));
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (id: number) => {
+    setDraggedRow(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (targetId: number) => {
+    if (draggedRow === null || draggedRow === targetId) return;
+
+    const draggedIndex = concepts.findIndex(c => c.id === draggedRow);
+    const targetIndex = concepts.findIndex(c => c.id === targetId);
+
+    const newConcepts = [...concepts];
+    const [removed] = newConcepts.splice(draggedIndex, 1);
+    newConcepts.splice(targetIndex, 0, removed);
+
+    setConcepts(newConcepts);
+    setDraggedRow(null);
+  };
+
+  // Preset management
+  const savePreset = async () => {
+    if (!presetName.trim()) {
+      alert("Please enter a preset name");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/presets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: presetName,
+          exchangeRate,
+          basePrice,
+          gallons,
+          liters,
+          margin,
+          marginInputType,
+          concepts,
+        }),
+      });
+
+      if (response.ok) {
+        await loadPresets();
+        setPresetName("");
+        alert(`Preset "${presetName}" saved successfully!`);
+      }
+    } catch (error) {
+      console.error("Failed to save preset:", error);
+      alert("Failed to save preset");
+    }
+  };
+
+  const loadPreset = async (id: string) => {
+    const preset = presets.find(p => p.id === id);
+    if (!preset) return;
+
+    setExchangeRate(preset.exchangeRate);
+    setBasePrice(preset.basePrice);
+    setGallons(preset.gallons);
+    setLiters(preset.liters);
+    setMargin(preset.margin);
+    setMarginInputType(preset.marginInputType as any);
+    setConcepts(preset.concepts);
+    alert(`Preset "${preset.name}" loaded successfully!`);
+  };
+
+  const updatePreset = async () => {
+    if (!selectedPreset) {
+      alert("Please select a preset to update");
+      return;
+    }
+
+    const preset = presets.find(p => p.id === selectedPreset);
+    if (!preset) return;
+
+    if (!confirm(`Update preset "${preset.name}" with current values?`)) return;
+
+    try {
+      const response = await fetch("/api/presets", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedPreset,
+          name: preset.name,
+          exchangeRate,
+          basePrice,
+          gallons,
+          liters,
+          margin,
+          marginInputType,
+          concepts,
+        }),
+      });
+
+      if (response.ok) {
+        await loadPresets();
+        alert(`Preset "${preset.name}" updated successfully!`);
+      }
+    } catch (error) {
+      console.error("Failed to update preset:", error);
+      alert("Failed to update preset");
+    }
+  };
+
+  const deletePreset = async () => {
+    if (!selectedPreset) {
+      alert("Please select a preset to delete");
+      return;
+    }
+
+    const preset = presets.find(p => p.id === selectedPreset);
+    if (!preset) return;
+
+    if (!confirm(`Are you sure you want to delete preset "${preset.name}"?`)) return;
+
+    try {
+      const response = await fetch(`/api/presets?id=${selectedPreset}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await loadPresets();
+        setSelectedPreset("");
+        alert(`Preset "${preset.name}" deleted successfully!`);
+      }
+    } catch (error) {
+      console.error("Failed to delete preset:", error);
+      alert("Failed to delete preset");
+    }
+  };
+
+  // WhatsApp sharing
+  const shareToWhatsApp = async () => {
+    if (!tableRef.current) return;
+
+    setIsSharing(true);
+
+    try {
+      // Capture the table as a canvas
+      const canvas = await html2canvas(tableRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        logging: false,
+      });
+
+      // Convert canvas to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.95);
+      });
+
+      const file = new File([blob], "fuel-calculator.jpg", { type: "image/jpeg" });
+
+      // Check if we're on mobile and can use Web Share API
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "Fuel Calculator Results",
+          text: `Exchange Rate: ${formatNumber(exchangeRate, 4)}\nTotal Cost: ${formatNumber(totals.mxn)} MXN`,
+          files: [file],
+        });
+      } else {
+        // Desktop: Download the image
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "fuel-calculator.jpg";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Provide WhatsApp links
+        const text = encodeURIComponent(
+          `Fuel Calculator Results\nExchange Rate: ${formatNumber(exchangeRate, 4)}\nTotal Cost: ${formatNumber(totals.mxn)} MXN`
+        );
+        const whatsappWeb = `https://web.whatsapp.com/send?text=${text}`;
+        const whatsappDesktop = `whatsapp://send?text=${text}`;
+
+        // Show options to user
+        if (confirm("Image downloaded! Would you like to open WhatsApp Web to share?")) {
+          window.open(whatsappWeb, "_blank");
+        } else if (confirm("Would you like to open WhatsApp Desktop?")) {
+          window.location.href = whatsappDesktop;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to share:", error);
+      alert("Failed to create shareable image");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Presets Section */}
+      <div className="bg-[#fafafa] p-4 rounded-sm border border-[#dbdbdb]">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Presets</Label>
+            <div className="flex gap-2">
+              <Select value={selectedPreset} onValueChange={setSelectedPreset}>
+                <SelectTrigger>
+                  <SelectValue placeholder="-- Select a Preset --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presets.map((preset) => (
+                    <SelectItem key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={() => selectedPreset && loadPreset(selectedPreset)}>
+                Load
+              </Button>
+              <Button variant="secondary" onClick={updatePreset}>
+                Update
+              </Button>
+              <Button variant="destructive" size="sm" onClick={deletePreset}>
+                Delete
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Save New Preset</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter preset name"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+              />
+              <Button onClick={savePreset}>Save</Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Input Controls */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Exchange Rate (MXN per USD)</Label>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              step="0.0001"
+              placeholder="Enter exchange rate"
+              value={exchangeRate || ""}
+              onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
+            />
+            <Button variant="secondary" onClick={handleExchangeRateFetch}>
+              Fetch Current Rate
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label>Base Price (USD/Gal)</Label>
+            <Input
+              type="number"
+              step="0.0001"
+              placeholder="0.0000"
+              value={basePrice || ""}
+              onChange={(e) => setBasePrice(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Gallons</Label>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={gallons || ""}
+              onChange={(e) => handleGallonsChange(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Liters</Label>
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={liters || ""}
+              onChange={(e) => handleLitersChange(parseFloat(e.target.value) || 0)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Table Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-[#262626]">Cost Breakdown</h2>
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={shareToWhatsApp} disabled={isSharing}>
+              <Share2 className="mr-2 h-4 w-4" />
+              {isSharing ? "Creating image..." : "Share to WhatsApp"}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setDecimalPlaces(decimalPlaces === 4 ? 2 : 4)}>
+              Switch to {decimalPlaces === 4 ? 2 : 4} Decimals
+            </Button>
+            <Button size="sm" onClick={addConcept}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Cost Concept
+            </Button>
+          </div>
+        </div>
+
+        <div ref={tableRef} className="border border-[#dbdbdb] rounded-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#fafafa]">
+                <TableHead className="font-semibold text-[#262626]">CONCEPT</TableHead>
+                <TableHead className="font-semibold text-[#262626]">MXN/LTR</TableHead>
+                <TableHead className="font-semibold text-[#262626]">MXN</TableHead>
+                <TableHead className="font-semibold text-[#262626]">USD</TableHead>
+                <TableHead className="font-semibold text-[#262626]">USD/GAL</TableHead>
+                {!isSharing && <TableHead className="font-semibold text-[#262626]">ACTIONS</TableHead>}
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {concepts.map((concept) => (
+                <TableRow
+                  key={concept.id}
+                  draggable={!isSharing}
+                  onDragStart={() => handleDragStart(concept.id)}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleDrop(concept.id)}
+                  className="cursor-move hover:bg-[#fafafa]"
+                >
+                  <TableCell className="relative">
+                    {!isSharing && <GripVertical className="absolute left-1 top-3 h-4 w-4 text-[#8e8e8e]" />}
+                    <Input
+                      className={isSharing ? "" : "ml-6"}
+                      value={concept.name}
+                      onChange={(e) => updateConceptName(concept.id, e.target.value)}
+                      disabled={concept.isBase}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={formatNumber(calculateMxnLtr(concept))}
+                      onChange={(e) => updateConceptValue(concept.id, e.target.value, "mxnLtr")}
+                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={formatNumber(calculateMxn(concept))}
+                      onChange={(e) => updateConceptValue(concept.id, e.target.value, "mxn")}
+                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={formatNumber(calculateUsd(concept))}
+                      onChange={(e) => updateConceptValue(concept.id, e.target.value, "usd")}
+                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={formatNumber(calculateUsdGal(concept))}
+                      onChange={(e) => concept.isBase ? setBasePrice(parseFormattedNumber(e.target.value)) : updateConceptValue(concept.id, e.target.value, "usdGal")}
+                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    />
+                  </TableCell>
+                  {!isSharing && (
+                    <TableCell>
+                      {!concept.isBase && (
+                        <Button variant="destructive" size="sm" onClick={() => deleteConcept(concept.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+
+            <TableFooter className="bg-[#fafafa]">
+              <TableRow className="border-t-2 border-[#dbdbdb]">
+                <TableCell className="font-semibold text-[#262626]">TOTAL COST</TableCell>
+                <TableCell className="font-semibold">{formatNumber(totals.mxnLtr)}</TableCell>
+                <TableCell className="font-semibold">{formatNumber(totals.mxn)}</TableCell>
+                <TableCell className="font-semibold">{formatNumber(totals.usd)}</TableCell>
+                <TableCell className="font-semibold">{formatNumber(totals.usdGal)}</TableCell>
+                {!isSharing && <TableCell></TableCell>}
+              </TableRow>
+
+              <TableRow className="border-t border-[#efefef]">
+                <TableCell className="font-semibold text-[#262626]">MARGIN</TableCell>
+                <TableCell>
+                  <Input
+                    value={formatNumber(marginValues.mxnLtr)}
+                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxnLtr"); }}
+                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={formatNumber(marginValues.mxn)}
+                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxn"); }}
+                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={formatNumber(marginValues.usd)}
+                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usd"); }}
+                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    value={formatNumber(marginValues.usdGal)}
+                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usdGal"); }}
+                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
+                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                  />
+                </TableCell>
+                {!isSharing && <TableCell></TableCell>}
+              </TableRow>
+
+              <TableRow className="border-t border-[#efefef]">
+                <TableCell className="font-bold text-[#0095f6]">SALE PRICE</TableCell>
+                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.mxnLtr)}</TableCell>
+                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.mxn)}</TableCell>
+                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.usd)}</TableCell>
+                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.usdGal)}</TableCell>
+                {!isSharing && <TableCell></TableCell>}
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,611 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #fafafa;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 935px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 3px;
+    border: 1px solid #dbdbdb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 0;
+    overflow: hidden;
+}
+
+header {
+    text-align: center;
+    padding: 32px 20px 24px;
+    border-bottom: 1px solid #efefef;
+    background: white;
+}
+
+header h1 {
+    color: #262626;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+}
+
+header p {
+    color: #8e8e8e;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.controls-section {
+    background: white;
+    padding: 24px;
+    border-bottom: 1px solid #efefef;
+}
+
+.presets-controls {
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    border: 1px solid #dbdbdb;
+}
+
+.preset-select-wrapper,
+.preset-save-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.preset-select-wrapper select {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    color: #262626;
+}
+
+.preset-select-wrapper select:focus {
+    outline: none;
+    border-color: #a8a8a8;
+}
+
+.preset-save-wrapper input {
+    flex: 1;
+}
+
+.input-group {
+    margin-bottom: 16px;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 600;
+    color: #262626;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    background: #fafafa;
+    color: #262626;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #a8a8a8;
+    background: white;
+}
+
+.exchange-rate-input {
+    display: flex;
+    gap: 8px;
+}
+
+.exchange-rate-input input {
+    flex: 1;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.info-text {
+    display: block;
+    margin-top: 6px;
+    color: #0095f6;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.btn-primary, .btn-secondary, .btn-danger, .btn-success {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.btn-primary {
+    background: #0095f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1877f2;
+}
+
+.btn-primary:active {
+    opacity: 0.7;
+}
+
+.btn-secondary {
+    background: #efefef;
+    color: #262626;
+}
+
+.btn-secondary:hover {
+    background: #dbdbdb;
+}
+
+.btn-danger {
+    background: #ed4956;
+    color: white;
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+.btn-danger:hover {
+    background: #c13584;
+}
+
+.btn-success {
+    background: #25D366;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #20ba5a;
+}
+
+.btn-success:active {
+    opacity: 0.7;
+}
+
+.table-section {
+    padding: 24px;
+    background: white;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.table-header h2 {
+    color: #262626;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.table-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+thead {
+    background: #fafafa;
+    color: #262626;
+    border-bottom: 1px solid #dbdbdb;
+}
+
+thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+tbody tr {
+    border-bottom: 1px solid #efefef;
+    transition: background-color 0.2s;
+}
+
+tbody tr:hover {
+    background-color: #fafafa;
+}
+
+.draggable-row {
+    cursor: move;
+}
+
+.draggable-row.dragging {
+    opacity: 0.4;
+}
+
+.drag-handle {
+    color: #8e8e8e;
+    font-weight: normal;
+    cursor: grab;
+    user-select: none;
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+tbody td {
+    padding: 12px 16px;
+    color: #262626;
+    font-size: 14px;
+}
+
+tbody td:first-child {
+    position: relative;
+    padding-left: 35px;
+}
+
+tbody td input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    background: #fafafa;
+}
+
+tbody td input:focus {
+    outline: none;
+    border-color: #a8a8a8;
+    background: white;
+}
+
+.editable-cell {
+    background-color: #fff;
+}
+
+.calculated-cell {
+    background-color: #fafafa;
+    color: #262626;
+    font-weight: 400;
+}
+
+tfoot {
+    background: #fafafa;
+    border-top: 1px solid #dbdbdb;
+}
+
+.total-row td {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #262626;
+}
+
+.total-row strong {
+    color: #262626;
+    font-weight: 600;
+}
+
+.margin-row td {
+    padding: 12px 16px;
+    font-size: 14px;
+    background-color: #fafafa;
+    border-top: 1px solid #efefef;
+}
+
+.margin-row strong {
+    color: #262626;
+    font-weight: 600;
+}
+
+.margin-row td input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 14px;
+    background-color: white;
+    transition: border-color 0.2s;
+}
+
+.margin-row td input:focus {
+    outline: none;
+    border-color: #a8a8a8;
+}
+
+.sale-price-row td {
+    padding: 12px 16px;
+    font-size: 14px;
+    background-color: #fafafa;
+    font-weight: 600;
+    border-top: 1px solid #efefef;
+}
+
+.sale-price-row strong {
+    color: #0095f6;
+    font-weight: 600;
+}
+
+.presets-section {
+    background: #fafafa;
+    padding: 24px;
+    border-radius: 3px;
+}
+
+.presets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.presets-header h2 {
+    color: #262626;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.preset-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.preset-controls input {
+    padding: 9px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 14px;
+    min-width: 200px;
+    background: white;
+}
+
+.preset-controls input:focus {
+    outline: none;
+    border-color: #a8a8a8;
+}
+
+.presets-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.preset-item {
+    background: white;
+    padding: 16px;
+    border-radius: 3px;
+    border: 1px solid #dbdbdb;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.preset-item:hover {
+    border-color: #a8a8a8;
+    transform: translateY(-1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.preset-item h3 {
+    color: #262626;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.preset-item p {
+    color: #8e8e8e;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.preset-item .preset-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.preset-item button {
+    flex: 1;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #8e8e8e;
+}
+
+.empty-state p {
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+    }
+
+    .container {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    header {
+        padding: 20px 16px 16px;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+
+    header p {
+        font-size: 12px;
+    }
+
+    .controls-section {
+        padding: 16px;
+    }
+
+    .presets-controls {
+        padding: 12px;
+    }
+
+    .preset-select-wrapper,
+    .preset-save-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .preset-select-wrapper select,
+    .preset-select-wrapper button,
+    .preset-save-wrapper input,
+    .preset-save-wrapper button {
+        width: 100%;
+    }
+
+    .input-row {
+        grid-template-columns: 1fr;
+    }
+
+    .exchange-rate-input {
+        flex-direction: column;
+    }
+
+    .exchange-rate-input button {
+        width: 100%;
+    }
+
+    .table-section {
+        padding: 16px;
+    }
+
+    .table-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .table-header h2 {
+        font-size: 14px;
+    }
+
+    .table-controls {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .table-controls button {
+        width: 100%;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        font-size: 14px;
+        min-width: 600px;
+    }
+
+    thead th {
+        padding: 10px 12px;
+        font-size: 11px;
+    }
+
+    tbody td {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    tbody td:first-child {
+        padding-left: 30px;
+    }
+
+    tbody td input {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .drag-handle {
+        font-size: 1em;
+        left: 4px;
+    }
+
+    .btn-primary, .btn-secondary, .btn-danger, .btn-success {
+        padding: 8px 14px;
+        font-size: 14px;
+    }
+
+    .btn-danger {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    tfoot td {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .margin-row td input {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .presets-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .preset-controls {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .preset-controls input {
+        width: 100%;
+    }
+}

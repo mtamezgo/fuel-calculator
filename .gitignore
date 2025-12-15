@@ -1,0 +1,28 @@
+# Vercel
+.vercel
+
+# MacOS
+.DS_Store
+
+# Editor directories
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Dependencies
+node_modules
+
+# Build output
+build
+.react-router
+.cache
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Drizzle
+drizzle

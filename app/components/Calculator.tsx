@@ -18,7 +18,7 @@ import {
   TableRow,
   TableFooter,
 } from "~/components/ui/table";
-import { GripVertical, Trash2, Plus, Share2, FileDown } from "lucide-react";
+import { GripVertical, Trash2, Plus, Share2, FileDown, ChevronUp, ChevronDown } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
@@ -290,70 +290,21 @@ export function Calculator() {
     setDraggedRow(null);
   };
 
-  // Touch handlers (mobile) - only activates when touching grip icon
-  const touchedRowId = useRef<number | null>(null);
-  const isDragging = useRef<boolean>(false);
-  const conceptsRef = useRef(concepts);
+  // Move row up/down (for mobile - uses buttons instead of drag)
+  const moveRowUp = (id: number) => {
+    const index = concepts.findIndex(c => c.id === id);
+    if (index <= 0) return;
+    const newConcepts = [...concepts];
+    [newConcepts[index - 1], newConcepts[index]] = [newConcepts[index], newConcepts[index - 1]];
+    setConcepts(newConcepts);
+  };
 
-  // Keep conceptsRef in sync with concepts state
-  useEffect(() => {
-    conceptsRef.current = concepts;
-  }, [concepts]);
-
-  // Document-level touch handlers for drag and drop
-  useEffect(() => {
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current || touchedRowId.current === null) return;
-
-      e.preventDefault(); // Prevent scrolling while dragging
-
-      const touch = e.touches[0];
-      const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-
-      // Find the table row under the touch point
-      const targetRow = elements.find(el => el.tagName === 'TR' && el.getAttribute('data-row-id'));
-      if (targetRow) {
-        const targetId = parseInt(targetRow.getAttribute('data-row-id') || '0');
-        if (targetId && targetId !== touchedRowId.current) {
-          // Reorder on the fly as finger moves
-          const currentConcepts = conceptsRef.current;
-          const draggedIndex = currentConcepts.findIndex(c => c.id === touchedRowId.current);
-          const targetIndex = currentConcepts.findIndex(c => c.id === targetId);
-
-          if (draggedIndex !== -1 && targetIndex !== -1) {
-            const newConcepts = [...currentConcepts];
-            const [removed] = newConcepts.splice(draggedIndex, 1);
-            newConcepts.splice(targetIndex, 0, removed);
-            setConcepts(newConcepts);
-            touchedRowId.current = targetId; // Update to follow the moved row
-          }
-        }
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (isDragging.current) {
-        touchedRowId.current = null;
-        isDragging.current = false;
-        setDraggedRow(null);
-      }
-    };
-
-    // Add passive: false to allow preventDefault
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
-
-  const handleGripTouchStart = (e: React.TouchEvent, id: number) => {
-    e.stopPropagation();
-    touchedRowId.current = id;
-    isDragging.current = true;
-    setDraggedRow(id);
+  const moveRowDown = (id: number) => {
+    const index = concepts.findIndex(c => c.id === id);
+    if (index < 0 || index >= concepts.length - 1) return;
+    const newConcepts = [...concepts];
+    [newConcepts[index], newConcepts[index + 1]] = [newConcepts[index + 1], newConcepts[index]];
+    setConcepts(newConcepts);
   };
 
   // Preset management
@@ -784,15 +735,34 @@ export function Calculator() {
                 >
                   <TableCell className="relative w-[200px] min-w-[200px] pr-4">
                     {!isSharing && (
-                      <div
-                        className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none"
-                        onTouchStart={(e) => handleGripTouchStart(e, concept.id)}
-                      >
-                        <GripVertical className="h-4 w-4 text-[#8e8e8e]" />
-                      </div>
+                      <>
+                        {/* Desktop: Drag handle */}
+                        <div className="hidden sm:flex absolute left-0 top-0 bottom-0 w-6 items-center justify-center cursor-grab active:cursor-grabbing select-none">
+                          <GripVertical className="h-4 w-4 text-[#8e8e8e]" />
+                        </div>
+                        {/* Mobile: Up/Down buttons */}
+                        <div className="sm:hidden absolute left-0 top-0 bottom-0 w-8 flex flex-col items-center justify-center gap-0">
+                          <button
+                            type="button"
+                            onClick={() => moveRowUp(concept.id)}
+                            className="p-0.5 text-[#8e8e8e] hover:text-[#262626] disabled:opacity-30"
+                            disabled={concepts.findIndex(c => c.id === concept.id) === 0}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveRowDown(concept.id)}
+                            className="p-0.5 text-[#8e8e8e] hover:text-[#262626] disabled:opacity-30"
+                            disabled={concepts.findIndex(c => c.id === concept.id) === concepts.length - 1}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </>
                     )}
                     <Input
-                      className={`${isSharing ? "" : "ml-6"} overflow-hidden text-ellipsis`}
+                      className={`${isSharing ? "" : "ml-6 sm:ml-6"} overflow-hidden text-ellipsis`}
                       value={concept.name}
                       onChange={(e) => updateConceptName(concept.id, e.target.value)}
                       disabled={concept.isBase}

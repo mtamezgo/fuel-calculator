@@ -1,10 +1,9 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "build/client",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "installCommand": "npm install",
+  "functions": {
+    "api/[[...path]].ts": {
+      "includeFiles": "build/**"
     }
-  ]
+  }
 }

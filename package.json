@@ -38,6 +38,7 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
+    "@vercel/node": "^5.5.15",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.4",
     "postcss": "^8.4.49",

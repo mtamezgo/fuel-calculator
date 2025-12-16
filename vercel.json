@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "functions": {
-    "api/index.mjs": {
+    "api/index.js": {
       "includeFiles": "build/**"
     }
   },

@@ -4,6 +4,7 @@ import { db } from "~/db";
 
 export const auth = betterAuth({
   basePath: "/api/auth",
+  secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -19,6 +20,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:5173",
     "http://localhost:5174",
+    "https://fuel-calculator-teal.vercel.app",
     process.env.BETTER_AUTH_URL || "",
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",
   ].filter(Boolean),

@@ -46,13 +46,19 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await signUp.email({
+      const result = await signUp.email({
         email,
         password,
         name,
       });
-      navigate("/");
+      console.log("Signup result:", result);
+      if (result.error) {
+        setError(result.error.message || "Failed to create account");
+      } else {
+        navigate("/");
+      }
     } catch (err: any) {
+      console.error("Signup error:", err);
       setError(err.message || "Failed to create account");
     } finally {
       setLoading(false);

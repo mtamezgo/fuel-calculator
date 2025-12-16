@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "functions": {
-    "api/index.js": {
+    "api/index.mjs": {
       "includeFiles": "build/**"
     }
   },
@@ -20,7 +20,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/index"
+      "destination": "/api"
     }
   ]
 }

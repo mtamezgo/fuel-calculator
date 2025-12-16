@@ -112,9 +112,9 @@ function FuelPriceCard({
 
       {/* Expanded Chart */}
       {expanded && stats && (
-        <div className="mt-4 flex gap-6">
+        <div className="mt-4 flex flex-col sm:flex-row gap-4 sm:gap-6">
           {/* Chart */}
-          <div className="flex-1 h-[300px]">
+          <div className="flex-1 h-[200px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <XAxis
@@ -152,8 +152,8 @@ function FuelPriceCard({
           </div>
 
           {/* Key Info Panel */}
-          <div className="w-[200px] space-y-4">
-            <div>
+          <div className="w-full sm:w-[200px] space-y-4">
+            <div className="hidden sm:block">
               <div className="text-xs text-[#8e8e8e] uppercase tracking-wide mb-2">Current Price</div>
               <div className="text-2xl font-bold text-[#262626]">
                 {formatPrice(data.price)}
@@ -166,28 +166,28 @@ function FuelPriceCard({
               </div>
             </div>
 
-            <div className="border-t border-[#dbdbdb] pt-4 space-y-3">
+            <div className="border-t border-[#dbdbdb] pt-4 grid grid-cols-3 sm:grid-cols-1 gap-3 sm:space-y-3 sm:gap-0">
               <div>
                 <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day High</div>
-                <div className="text-lg font-semibold text-[#262626]">
+                <div className="text-base sm:text-lg font-semibold text-[#262626]">
                   {formatPrice(stats.high)}
                 </div>
               </div>
               <div>
                 <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day Low</div>
-                <div className="text-lg font-semibold text-[#262626]">
+                <div className="text-base sm:text-lg font-semibold text-[#262626]">
                   {formatPrice(stats.low)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day Average</div>
-                <div className="text-lg font-semibold text-[#262626]">
+                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day Avg</div>
+                <div className="text-base sm:text-lg font-semibold text-[#262626]">
                   {formatPrice(stats.avg)}
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-[#dbdbdb] pt-4">
+            <div className="border-t border-[#dbdbdb] pt-4 hidden sm:block">
               <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">Symbol</div>
               <div className="text-sm font-medium text-[#262626] mt-1">
                 {data.symbol}
@@ -294,22 +294,24 @@ export function GasPriceWidget() {
               )}
             </div>
           ) : (
-            // Show all cards collapsed side by side
-            <div className="flex items-start justify-between gap-6">
+            // Show all cards collapsed - stacked on mobile, side by side on desktop
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
               <FuelPriceCard
                 data={priceData.rbob}
                 title="RBOB Gasoline"
                 expanded={expandedRbob}
                 onToggle={() => setExpandedRbob(!expandedRbob)}
               />
-              <div className="h-12 w-px bg-[#dbdbdb]" />
+              <div className="hidden sm:block h-12 w-px bg-[#dbdbdb]" />
+              <div className="sm:hidden w-full h-px bg-[#dbdbdb]" />
               <FuelPriceCard
                 data={priceData.heatingOil}
                 title="Heating Oil"
                 expanded={expandedHeatingOil}
                 onToggle={() => setExpandedHeatingOil(!expandedHeatingOil)}
               />
-              <div className="h-12 w-px bg-[#dbdbdb]" />
+              <div className="hidden sm:block h-12 w-px bg-[#dbdbdb]" />
+              <div className="sm:hidden w-full h-px bg-[#dbdbdb]" />
               <FuelPriceCard
                 data={priceData.usdMxn}
                 title="USD/MXN"
@@ -319,7 +321,7 @@ export function GasPriceWidget() {
               />
               <button
                 onClick={fetchPrice}
-                className="text-[#8e8e8e] hover:text-[#262626] transition-colors flex-shrink-0 mt-2"
+                className="text-[#8e8e8e] hover:text-[#262626] transition-colors flex-shrink-0 sm:mt-2 self-center sm:self-auto"
                 title="Refresh"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

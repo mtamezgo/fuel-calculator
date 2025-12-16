@@ -504,15 +504,15 @@ export function Calculator() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Presets Section */}
-      <div className="bg-[#fafafa] p-4 rounded-sm border border-[#dbdbdb]">
+      <div className="bg-[#fafafa] p-3 sm:p-4 rounded-sm border border-[#dbdbdb]">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>Presets</Label>
-            <div className="flex gap-2">
+            <Label className="text-sm">Presets</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Select value={selectedPreset} onValueChange={setSelectedPreset}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full sm:flex-1">
                   <SelectValue placeholder="-- Select a Preset --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -523,27 +523,30 @@ export function Calculator() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={() => selectedPreset && loadPreset(selectedPreset)}>
-                Load
-              </Button>
-              <Button variant="secondary" onClick={updatePreset}>
-                Update
-              </Button>
-              <Button variant="destructive" size="sm" onClick={deletePreset}>
-                Delete
-              </Button>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 sm:flex-none" onClick={() => selectedPreset && loadPreset(selectedPreset)}>
+                  Load
+                </Button>
+                <Button size="sm" variant="secondary" className="flex-1 sm:flex-none" onClick={updatePreset}>
+                  Update
+                </Button>
+                <Button variant="destructive" size="sm" className="flex-1 sm:flex-none" onClick={deletePreset}>
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Save New Preset</Label>
+            <Label className="text-sm">Save New Preset</Label>
             <div className="flex gap-2">
               <Input
                 placeholder="Enter preset name"
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
+                className="flex-1"
               />
-              <Button onClick={savePreset}>Save</Button>
+              <Button size="sm" onClick={savePreset}>Save</Button>
             </div>
           </div>
         </div>
@@ -552,24 +555,25 @@ export function Calculator() {
       {/* Input Controls */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Exchange Rate (MXN per USD)</Label>
-          <div className="flex gap-2">
+          <Label className="text-sm">Exchange Rate (MXN per USD)</Label>
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               type="number"
               step="0.0001"
               placeholder="Enter exchange rate"
               value={exchangeRate || ""}
               onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
+              className="flex-1"
             />
-            <Button variant="secondary" onClick={handleExchangeRateFetch}>
-              Fetch Current Rate
+            <Button variant="secondary" size="sm" className="whitespace-nowrap" onClick={handleExchangeRateFetch}>
+              Fetch Rate
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label>Base Price (USD/Gal)</Label>
+            <Label className="text-sm">Base Price (USD/Gal)</Label>
             <Input
               key={`basePrice-${basePrice}`}
               type="text"
@@ -580,7 +584,7 @@ export function Calculator() {
           </div>
 
           <div className="space-y-2">
-            <Label>Gallons</Label>
+            <Label className="text-sm">Gallons</Label>
             <Input
               key={`gallons-${gallons}`}
               type="text"
@@ -591,7 +595,7 @@ export function Calculator() {
           </div>
 
           <div className="space-y-2">
-            <Label>Liters</Label>
+            <Label className="text-sm">Liters</Label>
             <Input
               key={`liters-${liters}`}
               type="text"
@@ -604,29 +608,31 @@ export function Calculator() {
       </div>
 
       {/* Table Section */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-[#262626]">Cost Breakdown</h2>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={shareToWhatsApp} disabled={isSharing}>
-              <Share2 className="mr-2 h-4 w-4" />
-              {isSharing ? "Creating..." : "Share to WhatsApp"}
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <h2 className="text-base sm:text-lg font-semibold text-[#262626]">Cost Breakdown</h2>
+          <div className="grid grid-cols-2 sm:flex gap-2">
+            <Button variant="secondary" size="sm" className="text-xs sm:text-sm" onClick={shareToWhatsApp} disabled={isSharing}>
+              <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{isSharing ? "Creating..." : "Share"}</span>
+              <span className="sm:hidden">{isSharing ? "..." : "Share"}</span>
             </Button>
-            <Button variant="secondary" size="sm" onClick={exportToPdf} disabled={isSharing}>
-              <FileDown className="mr-2 h-4 w-4" />
-              {isSharing ? "Creating..." : "Download PDF"}
+            <Button variant="secondary" size="sm" className="text-xs sm:text-sm" onClick={exportToPdf} disabled={isSharing}>
+              <FileDown className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{isSharing ? "Creating..." : "PDF"}</span>
+              <span className="sm:hidden">{isSharing ? "..." : "PDF"}</span>
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setDecimalPlaces(decimalPlaces === 4 ? 2 : 4)}>
-              Switch to {decimalPlaces === 4 ? 2 : 4} Decimals
+            <Button variant="secondary" size="sm" className="text-xs sm:text-sm" onClick={() => setDecimalPlaces(decimalPlaces === 4 ? 2 : 4)}>
+              {decimalPlaces === 4 ? 2 : 4} Dec
             </Button>
-            <Button size="sm" onClick={addConcept}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Cost Concept
+            <Button size="sm" className="text-xs sm:text-sm" onClick={addConcept}>
+              <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              Add
             </Button>
           </div>
         </div>
 
-        <div ref={tableRef} className="border border-[#dbdbdb] rounded-sm overflow-hidden">
+        <div ref={tableRef} className="border border-[#dbdbdb] rounded-sm overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#fafafa]">

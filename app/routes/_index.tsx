@@ -44,19 +44,19 @@ export default function Index() {
     <div className="min-h-screen bg-[#fafafa]">
       {/* Header */}
       <header className="bg-white border-b border-[#dbdbdb] sticky top-0 z-10">
-        <div className="max-w-[935px] mx-auto px-5 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-[#262626]">
+        <div className="max-w-[935px] mx-auto px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#262626]">
             Fuel Margin Calculator
           </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-[#8e8e8e]">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xs sm:text-sm text-[#8e8e8e] truncate max-w-[150px] sm:max-w-none">
               {session.user.email}
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="text-[#0095f6] hover:text-[#1877f2]"
+              className="text-[#0095f6] hover:text-[#1877f2] text-xs sm:text-sm"
             >
               Sign out
             </Button>
@@ -65,12 +65,12 @@ export default function Index() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[935px] mx-auto px-5 py-8 space-y-6">
+      <main className="max-w-[935px] mx-auto px-3 sm:px-5 py-4 sm:py-8 space-y-4 sm:space-y-6">
         {/* Gas Price Widget - Full Width at Top */}
         <GasPriceWidget />
 
         {/* Calculator */}
-        <div className="bg-white border border-[#dbdbdb] rounded-sm shadow-sm p-6">
+        <div className="bg-white border border-[#dbdbdb] rounded-sm shadow-sm p-3 sm:p-6">
           <Calculator />
         </div>
       </main>

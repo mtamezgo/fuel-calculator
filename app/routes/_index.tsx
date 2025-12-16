@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession, signOut } from "~/lib/auth-client";
 import { Button } from "~/components/ui/button";
 import { Calculator } from "~/components/Calculator";
+import { GasPriceWidget } from "~/components/GasPriceWidget";
 import type { Route } from "./+types/_index";
 
 export function meta({}: Route.MetaArgs) {
@@ -64,7 +65,11 @@ export default function Index() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[935px] mx-auto px-5 py-8">
+      <main className="max-w-[935px] mx-auto px-5 py-8 space-y-6">
+        {/* Gas Price Widget - Full Width at Top */}
+        <GasPriceWidget />
+
+        {/* Calculator */}
         <div className="bg-white border border-[#dbdbdb] rounded-sm shadow-sm p-6">
           <Calculator />
         </div>

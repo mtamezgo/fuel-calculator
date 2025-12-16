@@ -556,7 +556,7 @@ export function Calculator() {
               type="number"
               step="0.01"
               placeholder="0.00"
-              value={liters || ""}
+              value={liters ? liters.toFixed(2) : ""}
               onChange={(e) => handleLitersChange(parseFloat(e.target.value) || 0)}
             />
           </div>
@@ -586,12 +586,12 @@ export function Calculator() {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#fafafa]">
-                <TableHead className="font-semibold text-[#262626]">CONCEPT</TableHead>
-                <TableHead className="font-semibold text-[#262626]">MXN/LTR</TableHead>
-                <TableHead className="font-semibold text-[#262626]">MXN</TableHead>
-                <TableHead className="font-semibold text-[#262626]">USD</TableHead>
-                <TableHead className="font-semibold text-[#262626]">USD/GAL</TableHead>
-                {!isSharing && <TableHead className="font-semibold text-[#262626]">ACTIONS</TableHead>}
+                <TableHead className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">CONCEPT</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">MXN/LTR</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">MXN</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">USD</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">USD/GAL</TableHead>
+                {!isSharing && <TableHead className="font-semibold text-[#262626] w-[100px] min-w-[100px]">ACTIONS</TableHead>}
               </TableRow>
             </TableHeader>
 
@@ -605,16 +605,16 @@ export function Calculator() {
                   onDrop={() => handleDrop(concept.id)}
                   className="cursor-move hover:bg-[#fafafa]"
                 >
-                  <TableCell className="relative">
+                  <TableCell className="relative w-[200px] min-w-[200px] pr-4">
                     {!isSharing && <GripVertical className="absolute left-1 top-3 h-4 w-4 text-[#8e8e8e]" />}
                     <Input
-                      className={isSharing ? "" : "ml-6"}
+                      className={`${isSharing ? "" : "ml-6"} overflow-hidden text-ellipsis`}
                       value={concept.name}
                       onChange={(e) => updateConceptName(concept.id, e.target.value)}
                       disabled={concept.isBase}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[140px] min-w-[140px]">
                     <Input
                       value={formatNumber(calculateMxnLtr(concept))}
                       onChange={(e) => updateConceptValue(concept.id, e.target.value, "mxnLtr")}
@@ -622,7 +622,7 @@ export function Calculator() {
                       onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[140px] min-w-[140px]">
                     <Input
                       value={formatNumber(calculateMxn(concept))}
                       onChange={(e) => updateConceptValue(concept.id, e.target.value, "mxn")}
@@ -630,7 +630,7 @@ export function Calculator() {
                       onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[140px] min-w-[140px]">
                     <Input
                       value={formatNumber(calculateUsd(concept))}
                       onChange={(e) => updateConceptValue(concept.id, e.target.value, "usd")}
@@ -638,7 +638,7 @@ export function Calculator() {
                       onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[140px] min-w-[140px]">
                     <Input
                       value={formatNumber(calculateUsdGal(concept))}
                       onChange={(e) => concept.isBase ? setBasePrice(parseFormattedNumber(e.target.value)) : updateConceptValue(concept.id, e.target.value, "usdGal")}
@@ -647,7 +647,7 @@ export function Calculator() {
                     />
                   </TableCell>
                   {!isSharing && (
-                    <TableCell>
+                    <TableCell className="w-[100px] min-w-[100px]">
                       {!concept.isBase && (
                         <Button variant="destructive" size="sm" onClick={() => deleteConcept(concept.id)}>
                           <Trash2 className="h-4 w-4" />
@@ -661,17 +661,17 @@ export function Calculator() {
 
             <TableFooter className="bg-[#fafafa]">
               <TableRow className="border-t-2 border-[#dbdbdb]">
-                <TableCell className="font-semibold text-[#262626]">TOTAL COST</TableCell>
-                <TableCell className="font-semibold">{formatNumber(totals.mxnLtr)}</TableCell>
-                <TableCell className="font-semibold">{formatNumber(totals.mxn)}</TableCell>
-                <TableCell className="font-semibold">{formatNumber(totals.usd)}</TableCell>
-                <TableCell className="font-semibold">{formatNumber(totals.usdGal)}</TableCell>
-                {!isSharing && <TableCell></TableCell>}
+                <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">TOTAL COST</TableCell>
+                <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.mxnLtr)}</TableCell>
+                <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.mxn)}</TableCell>
+                <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.usd)}</TableCell>
+                <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.usdGal)}</TableCell>
+                {!isSharing && <TableCell className="w-[100px] min-w-[100px]"></TableCell>}
               </TableRow>
 
               <TableRow className="border-t border-[#efefef]">
-                <TableCell className="font-semibold text-[#262626]">MARGIN</TableCell>
-                <TableCell>
+                <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">MARGIN</TableCell>
+                <TableCell className="w-[140px] min-w-[140px]">
                   <Input
                     value={formatNumber(marginValues.mxnLtr)}
                     onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxnLtr"); }}
@@ -679,7 +679,7 @@ export function Calculator() {
                     onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[140px] min-w-[140px]">
                   <Input
                     value={formatNumber(marginValues.mxn)}
                     onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxn"); }}
@@ -687,7 +687,7 @@ export function Calculator() {
                     onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[140px] min-w-[140px]">
                   <Input
                     value={formatNumber(marginValues.usd)}
                     onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usd"); }}
@@ -695,7 +695,7 @@ export function Calculator() {
                     onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell className="w-[140px] min-w-[140px]">
                   <Input
                     value={formatNumber(marginValues.usdGal)}
                     onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usdGal"); }}
@@ -703,16 +703,16 @@ export function Calculator() {
                     onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
                   />
                 </TableCell>
-                {!isSharing && <TableCell></TableCell>}
+                {!isSharing && <TableCell className="w-[100px] min-w-[100px]"></TableCell>}
               </TableRow>
 
               <TableRow className="border-t border-[#efefef]">
-                <TableCell className="font-bold text-[#0095f6]">SALE PRICE</TableCell>
-                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.mxnLtr)}</TableCell>
-                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.mxn)}</TableCell>
-                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.usd)}</TableCell>
-                <TableCell className="font-bold text-[#0095f6]">{formatNumber(salePrice.usdGal)}</TableCell>
-                {!isSharing && <TableCell></TableCell>}
+                <TableCell className="font-bold text-[#0095f6] w-[200px] min-w-[200px] pr-4">SALE PRICE</TableCell>
+                <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.mxnLtr)}</TableCell>
+                <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.mxn)}</TableCell>
+                <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.usd)}</TableCell>
+                <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.usdGal)}</TableCell>
+                {!isSharing && <TableCell className="w-[100px] min-w-[100px]"></TableCell>}
               </TableRow>
             </TableFooter>
           </Table>

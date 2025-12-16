@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -23,9 +23,11 @@ export default function Login() {
   const { data: session } = useSession();
 
   // Redirect if already logged in
-  if (session?.user) {
-    navigate("/");
-  }
+  useEffect(() => {
+    if (session?.user) {
+      navigate("/");
+    }
+  }, [session, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +35,18 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await signIn.email({
+      const result = await signIn.email({
         email,
         password,
       });
-      navigate("/");
+      console.log("Login result:", result);
+      if (result.error) {
+        setError(result.error.message || "Invalid email or password");
+      } else {
+        navigate("/");
+      }
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message || "Invalid email or password");
     } finally {
       setLoading(false);

@@ -267,7 +267,7 @@ export function Calculator() {
     setConcepts(concepts.map(c => c.id === id ? { ...c, value: numValue, inputType } : c));
   };
 
-  // Drag and drop handlers
+  // Drag and drop handlers (desktop)
   const handleDragStart = (id: number) => {
     setDraggedRow(id);
   };
@@ -288,6 +288,72 @@ export function Calculator() {
 
     setConcepts(newConcepts);
     setDraggedRow(null);
+  };
+
+  // Touch handlers (mobile) - only activates when touching grip icon
+  const touchedRowId = useRef<number | null>(null);
+  const isDragging = useRef<boolean>(false);
+  const conceptsRef = useRef(concepts);
+
+  // Keep conceptsRef in sync with concepts state
+  useEffect(() => {
+    conceptsRef.current = concepts;
+  }, [concepts]);
+
+  // Document-level touch handlers for drag and drop
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current || touchedRowId.current === null) return;
+
+      e.preventDefault(); // Prevent scrolling while dragging
+
+      const touch = e.touches[0];
+      const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+
+      // Find the table row under the touch point
+      const targetRow = elements.find(el => el.tagName === 'TR' && el.getAttribute('data-row-id'));
+      if (targetRow) {
+        const targetId = parseInt(targetRow.getAttribute('data-row-id') || '0');
+        if (targetId && targetId !== touchedRowId.current) {
+          // Reorder on the fly as finger moves
+          const currentConcepts = conceptsRef.current;
+          const draggedIndex = currentConcepts.findIndex(c => c.id === touchedRowId.current);
+          const targetIndex = currentConcepts.findIndex(c => c.id === targetId);
+
+          if (draggedIndex !== -1 && targetIndex !== -1) {
+            const newConcepts = [...currentConcepts];
+            const [removed] = newConcepts.splice(draggedIndex, 1);
+            newConcepts.splice(targetIndex, 0, removed);
+            setConcepts(newConcepts);
+            touchedRowId.current = targetId; // Update to follow the moved row
+          }
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isDragging.current) {
+        touchedRowId.current = null;
+        isDragging.current = false;
+        setDraggedRow(null);
+      }
+    };
+
+    // Add passive: false to allow preventDefault
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  const handleGripTouchStart = (e: React.TouchEvent, id: number) => {
+    e.stopPropagation();
+    touchedRowId.current = id;
+    isDragging.current = true;
+    setDraggedRow(id);
   };
 
   // Preset management
@@ -410,12 +476,42 @@ export function Calculator() {
     setIsSharing(true);
 
     try {
-      // Capture the table as a canvas
-      const canvas = await html2canvas(tableRef.current, {
+      // Find the actual table element inside the container
+      const tableElement = tableRef.current.querySelector("table");
+      if (!tableElement) return;
+
+      // Clone the table to capture it without overflow constraints
+      const clone = tableElement.cloneNode(true) as HTMLElement;
+      clone.style.position = "absolute";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      clone.style.backgroundColor = "#ffffff";
+
+      // Remove the actions column (last column) from the clone
+      const headerRow = clone.querySelector("thead tr");
+      const bodyRows = clone.querySelectorAll("tbody tr");
+      const footerRow = clone.querySelector("tfoot tr");
+
+      if (headerRow?.lastElementChild) headerRow.lastElementChild.remove();
+      bodyRows.forEach(row => row.lastElementChild?.remove());
+      if (footerRow?.lastElementChild) footerRow.lastElementChild.remove();
+
+      document.body.appendChild(clone);
+
+      // Get width after removing actions column
+      const cloneWidth = clone.scrollWidth;
+      clone.style.width = `${cloneWidth}px`;
+
+      // Capture the cloned table
+      const canvas = await html2canvas(clone, {
         backgroundColor: "#ffffff",
         scale: 2,
         logging: false,
+        width: cloneWidth,
       });
+
+      // Remove the clone
+      document.body.removeChild(clone);
 
       // Convert canvas to blob
       const blob = await new Promise<Blob>((resolve) => {
@@ -471,12 +567,42 @@ export function Calculator() {
     setIsSharing(true);
 
     try {
-      // Capture the table as a canvas
-      const canvas = await html2canvas(tableRef.current, {
+      // Find the actual table element inside the container
+      const tableElement = tableRef.current.querySelector("table");
+      if (!tableElement) return;
+
+      // Clone the table to capture it without overflow constraints
+      const clone = tableElement.cloneNode(true) as HTMLElement;
+      clone.style.position = "absolute";
+      clone.style.left = "-9999px";
+      clone.style.top = "0";
+      clone.style.backgroundColor = "#ffffff";
+
+      // Remove the actions column (last column) from the clone
+      const headerRow = clone.querySelector("thead tr");
+      const bodyRows = clone.querySelectorAll("tbody tr");
+      const footerRow = clone.querySelector("tfoot tr");
+
+      if (headerRow?.lastElementChild) headerRow.lastElementChild.remove();
+      bodyRows.forEach(row => row.lastElementChild?.remove());
+      if (footerRow?.lastElementChild) footerRow.lastElementChild.remove();
+
+      document.body.appendChild(clone);
+
+      // Get width after removing actions column
+      const cloneWidth = clone.scrollWidth;
+      clone.style.width = `${cloneWidth}px`;
+
+      // Capture the cloned table
+      const canvas = await html2canvas(clone, {
         backgroundColor: "#ffffff",
         scale: 2,
         logging: false,
+        width: cloneWidth,
       });
+
+      // Remove the clone
+      document.body.removeChild(clone);
 
       // Get image dimensions
       const imgWidth = canvas.width;
@@ -649,14 +775,22 @@ export function Calculator() {
               {concepts.map((concept) => (
                 <TableRow
                   key={concept.id}
+                  data-row-id={concept.id}
                   draggable={!isSharing}
                   onDragStart={() => handleDragStart(concept.id)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(concept.id)}
-                  className="cursor-move hover:bg-[#fafafa]"
+                  className={`cursor-move hover:bg-[#fafafa] ${draggedRow === concept.id ? 'bg-blue-50' : ''}`}
                 >
                   <TableCell className="relative w-[200px] min-w-[200px] pr-4">
-                    {!isSharing && <GripVertical className="absolute left-1 top-3 h-4 w-4 text-[#8e8e8e]" />}
+                    {!isSharing && (
+                      <div
+                        className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none"
+                        onTouchStart={(e) => handleGripTouchStart(e, concept.id)}
+                      >
+                        <GripVertical className="h-4 w-4 text-[#8e8e8e]" />
+                      </div>
+                    )}
                     <Input
                       className={`${isSharing ? "" : "ml-6"} overflow-hidden text-ellipsis`}
                       value={concept.name}

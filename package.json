@@ -19,6 +19,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@react-router/node": "^7.10.1",
     "@supabase/supabase-js": "^2.45.4",
+    "@vercel/react-router": "^1.2.4",
     "better-auth": "^1.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

@@ -18,8 +18,9 @@ import {
   TableRow,
   TableFooter,
 } from "~/components/ui/table";
-import { GripVertical, Trash2, Plus, Share2 } from "lucide-react";
+import { GripVertical, Trash2, Plus, Share2, FileDown } from "lucide-react";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // Constants
 const LITERS_PER_GALLON = 3.78541;
@@ -463,6 +464,45 @@ export function Calculator() {
     }
   };
 
+  // PDF export
+  const exportToPdf = async () => {
+    if (!tableRef.current) return;
+
+    setIsSharing(true);
+
+    try {
+      // Capture the table as a canvas
+      const canvas = await html2canvas(tableRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        logging: false,
+      });
+
+      // Get image dimensions
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      // Create PDF in landscape mode for wide table
+      const pdf = new jsPDF({
+        orientation: imgWidth > imgHeight ? "landscape" : "portrait",
+        unit: "px",
+        format: [imgWidth, imgHeight],
+      });
+
+      // Add the image to PDF
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+      // Download the PDF
+      pdf.save("fuel-calculator.pdf");
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+      alert("Failed to create PDF");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Presets Section */}
@@ -531,33 +571,33 @@ export function Calculator() {
           <div className="space-y-2">
             <Label>Base Price (USD/Gal)</Label>
             <Input
-              type="number"
-              step="0.0001"
+              key={`basePrice-${basePrice}`}
+              type="text"
               placeholder="0.0000"
-              value={basePrice || ""}
-              onChange={(e) => setBasePrice(parseFloat(e.target.value) || 0)}
+              defaultValue={basePrice !== 0 ? formatNumber(basePrice) : ""}
+              onBlur={(e) => setBasePrice(parseFormattedNumber(e.target.value))}
             />
           </div>
 
           <div className="space-y-2">
             <Label>Gallons</Label>
             <Input
-              type="number"
-              step="0.01"
+              key={`gallons-${gallons}`}
+              type="text"
               placeholder="0.00"
-              value={gallons || ""}
-              onChange={(e) => handleGallonsChange(parseFloat(e.target.value) || 0)}
+              defaultValue={gallons !== 0 ? formatNumber(gallons, 2) : ""}
+              onBlur={(e) => handleGallonsChange(parseFormattedNumber(e.target.value))}
             />
           </div>
 
           <div className="space-y-2">
             <Label>Liters</Label>
             <Input
-              type="number"
-              step="0.01"
+              key={`liters-${liters}`}
+              type="text"
               placeholder="0.00"
-              value={liters ? liters.toFixed(2) : ""}
-              onChange={(e) => handleLitersChange(parseFloat(e.target.value) || 0)}
+              defaultValue={liters !== 0 ? formatNumber(liters, 2) : ""}
+              onBlur={(e) => handleLitersChange(parseFormattedNumber(e.target.value))}
             />
           </div>
         </div>
@@ -570,7 +610,11 @@ export function Calculator() {
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={shareToWhatsApp} disabled={isSharing}>
               <Share2 className="mr-2 h-4 w-4" />
-              {isSharing ? "Creating image..." : "Share to WhatsApp"}
+              {isSharing ? "Creating..." : "Share to WhatsApp"}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={exportToPdf} disabled={isSharing}>
+              <FileDown className="mr-2 h-4 w-4" />
+              {isSharing ? "Creating..." : "Download PDF"}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setDecimalPlaces(decimalPlaces === 4 ? 2 : 4)}>
               Switch to {decimalPlaces === 4 ? 2 : 4} Decimals
@@ -616,34 +660,53 @@ export function Calculator() {
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      value={formatNumber(calculateMxnLtr(concept))}
-                      onChange={(e) => updateConceptValue(concept.id, e.target.value, "mxnLtr")}
-                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                      key={`${concept.id}-mxnLtr-${concept.inputType !== "mxnLtr" ? formatNumber(calculateMxnLtr(concept)) : "edit"}`}
+                      type="text"
+                      defaultValue={calculateMxnLtr(concept) !== 0 ? formatNumber(calculateMxnLtr(concept)) : ""}
+                      onBlur={(e) => {
+                        const val = parseFormattedNumber(e.target.value);
+                        updateConceptValue(concept.id, String(val), "mxnLtr");
+                      }}
+                      disabled={concept.isBase}
                     />
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      value={formatNumber(calculateMxn(concept))}
-                      onChange={(e) => updateConceptValue(concept.id, e.target.value, "mxn")}
-                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                      key={`${concept.id}-mxn-${concept.inputType !== "mxn" ? formatNumber(calculateMxn(concept)) : "edit"}`}
+                      type="text"
+                      defaultValue={calculateMxn(concept) !== 0 ? formatNumber(calculateMxn(concept)) : ""}
+                      onBlur={(e) => {
+                        const val = parseFormattedNumber(e.target.value);
+                        updateConceptValue(concept.id, String(val), "mxn");
+                      }}
+                      disabled={concept.isBase}
                     />
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      value={formatNumber(calculateUsd(concept))}
-                      onChange={(e) => updateConceptValue(concept.id, e.target.value, "usd")}
-                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                      key={`${concept.id}-usd-${concept.inputType !== "usd" ? formatNumber(calculateUsd(concept)) : "edit"}`}
+                      type="text"
+                      defaultValue={calculateUsd(concept) !== 0 ? formatNumber(calculateUsd(concept)) : ""}
+                      onBlur={(e) => {
+                        const val = parseFormattedNumber(e.target.value);
+                        updateConceptValue(concept.id, String(val), "usd");
+                      }}
+                      disabled={concept.isBase}
                     />
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      value={formatNumber(calculateUsdGal(concept))}
-                      onChange={(e) => concept.isBase ? setBasePrice(parseFormattedNumber(e.target.value)) : updateConceptValue(concept.id, e.target.value, "usdGal")}
-                      onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                      onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                      key={`${concept.id}-usdGal-${concept.isBase ? formatNumber(basePrice) : (concept.inputType !== "usdGal" ? formatNumber(calculateUsdGal(concept)) : "edit")}`}
+                      type="text"
+                      defaultValue={concept.isBase ? (basePrice !== 0 ? formatNumber(basePrice) : "") : (calculateUsdGal(concept) !== 0 ? formatNumber(calculateUsdGal(concept)) : "")}
+                      onBlur={(e) => {
+                        const val = parseFormattedNumber(e.target.value);
+                        if (concept.isBase) {
+                          setBasePrice(val);
+                        } else {
+                          updateConceptValue(concept.id, String(val), "usdGal");
+                        }
+                      }}
                     />
                   </TableCell>
                   {!isSharing && (
@@ -673,34 +736,34 @@ export function Calculator() {
                 <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">MARGIN</TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    value={formatNumber(marginValues.mxnLtr)}
-                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxnLtr"); }}
-                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    key={`margin-mxnLtr-${marginInputType !== "mxnLtr" ? formatNumber(marginValues.mxnLtr) : "edit"}`}
+                    type="text"
+                    defaultValue={marginValues.mxnLtr !== 0 ? formatNumber(marginValues.mxnLtr) : ""}
+                    onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxnLtr"); }}
                   />
                 </TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    value={formatNumber(marginValues.mxn)}
-                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxn"); }}
-                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    key={`margin-mxn-${marginInputType !== "mxn" ? formatNumber(marginValues.mxn) : "edit"}`}
+                    type="text"
+                    defaultValue={marginValues.mxn !== 0 ? formatNumber(marginValues.mxn) : ""}
+                    onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxn"); }}
                   />
                 </TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    value={formatNumber(marginValues.usd)}
-                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usd"); }}
-                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    key={`margin-usd-${marginInputType !== "usd" ? formatNumber(marginValues.usd) : "edit"}`}
+                    type="text"
+                    defaultValue={marginValues.usd !== 0 ? formatNumber(marginValues.usd) : ""}
+                    onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usd"); }}
                   />
                 </TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    value={formatNumber(marginValues.usdGal)}
-                    onChange={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usdGal"); }}
-                    onFocus={(e) => e.target.value = e.target.value.replace(/,/g, "")}
-                    onBlur={(e) => e.target.value = formatNumber(parseFormattedNumber(e.target.value))}
+                    key={`margin-usdGal-${marginInputType !== "usdGal" ? formatNumber(marginValues.usdGal) : "edit"}`}
+                    type="text"
+                    defaultValue={marginValues.usdGal !== 0 ? formatNumber(marginValues.usdGal) : ""}
+                    onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usdGal"); }}
                   />
                 </TableCell>
                 {!isSharing && <TableCell className="w-[100px] min-w-[100px]"></TableCell>}

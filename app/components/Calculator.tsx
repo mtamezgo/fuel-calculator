@@ -50,6 +50,7 @@ export function Calculator() {
   // State
   const [exchangeRate, setExchangeRate] = useState(0);
   const [basePrice, setBasePrice] = useState(0);
+  const [basePriceInputType, setBasePriceInputType] = useState<"mxnLtr" | "mxn" | "usd" | "usdGal">("usdGal");
   const [gallons, setGallons] = useState(0);
   const [liters, setLiters] = useState(0);
   const [concepts, setConcepts] = useState<Concept[]>([]);
@@ -100,6 +101,28 @@ export function Calculator() {
   const mxnToUsd = (mxn: number, rate: number) => mxn / rate;
   const usdPerGalToMxnPerLtr = (usdGal: number, rate: number) => (usdGal / LITERS_PER_GALLON) * rate;
   const mxnPerLtrToUsdPerGal = (mxnLtr: number, rate: number) => (mxnLtr / rate) * LITERS_PER_GALLON;
+
+  // Update base price from any column input
+  const updateBasePriceFromInput = (value: number, inputType: "mxnLtr" | "mxn" | "usd" | "usdGal") => {
+    let usdGalValue: number;
+    switch (inputType) {
+      case "mxnLtr":
+        usdGalValue = mxnPerLtrToUsdPerGal(value, exchangeRate);
+        break;
+      case "mxn":
+        usdGalValue = liters ? mxnPerLtrToUsdPerGal(value / liters, exchangeRate) : 0;
+        break;
+      case "usd":
+        usdGalValue = gallons ? value / gallons : 0;
+        break;
+      case "usdGal":
+      default:
+        usdGalValue = value;
+        break;
+    }
+    setBasePrice(usdGalValue);
+    setBasePriceInputType(inputType);
+  };
 
   // Format number with commas
   const formatNumber = (value: number, decimals?: number) => {
@@ -652,11 +675,14 @@ export function Calculator() {
           <div className="space-y-2">
             <Label className="text-sm">Base Price (USD/Gal)</Label>
             <Input
-              key={`basePrice-${basePrice}`}
+              key={`basePrice-${basePrice}-${basePriceInputType}`}
               type="text"
               placeholder="0.0000"
               defaultValue={basePrice !== 0 ? formatNumber(basePrice) : ""}
-              onBlur={(e) => setBasePrice(parseFormattedNumber(e.target.value))}
+              onBlur={(e) => {
+                setBasePrice(parseFormattedNumber(e.target.value));
+                setBasePriceInputType("usdGal");
+              }}
             />
           </div>
 
@@ -770,49 +796,58 @@ export function Calculator() {
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      key={`${concept.id}-mxnLtr-${concept.inputType !== "mxnLtr" ? formatNumber(calculateMxnLtr(concept)) : "edit"}`}
+                      key={`${concept.id}-mxnLtr-${decimalPlaces}-${concept.isBase ? (basePriceInputType !== "mxnLtr" ? formatNumber(calculateMxnLtr(concept)) : "edit") : (concept.inputType !== "mxnLtr" ? formatNumber(calculateMxnLtr(concept)) : "edit")}`}
                       type="text"
                       defaultValue={calculateMxnLtr(concept) !== 0 ? formatNumber(calculateMxnLtr(concept)) : ""}
                       onBlur={(e) => {
                         const val = parseFormattedNumber(e.target.value);
-                        updateConceptValue(concept.id, String(val), "mxnLtr");
+                        if (concept.isBase) {
+                          updateBasePriceFromInput(val, "mxnLtr");
+                        } else {
+                          updateConceptValue(concept.id, String(val), "mxnLtr");
+                        }
                       }}
-                      disabled={concept.isBase}
                     />
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      key={`${concept.id}-mxn-${concept.inputType !== "mxn" ? formatNumber(calculateMxn(concept)) : "edit"}`}
+                      key={`${concept.id}-mxn-${decimalPlaces}-${concept.isBase ? (basePriceInputType !== "mxn" ? formatNumber(calculateMxn(concept)) : "edit") : (concept.inputType !== "mxn" ? formatNumber(calculateMxn(concept)) : "edit")}`}
                       type="text"
                       defaultValue={calculateMxn(concept) !== 0 ? formatNumber(calculateMxn(concept)) : ""}
                       onBlur={(e) => {
                         const val = parseFormattedNumber(e.target.value);
-                        updateConceptValue(concept.id, String(val), "mxn");
+                        if (concept.isBase) {
+                          updateBasePriceFromInput(val, "mxn");
+                        } else {
+                          updateConceptValue(concept.id, String(val), "mxn");
+                        }
                       }}
-                      disabled={concept.isBase}
                     />
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      key={`${concept.id}-usd-${concept.inputType !== "usd" ? formatNumber(calculateUsd(concept)) : "edit"}`}
+                      key={`${concept.id}-usd-${decimalPlaces}-${concept.isBase ? (basePriceInputType !== "usd" ? formatNumber(calculateUsd(concept)) : "edit") : (concept.inputType !== "usd" ? formatNumber(calculateUsd(concept)) : "edit")}`}
                       type="text"
                       defaultValue={calculateUsd(concept) !== 0 ? formatNumber(calculateUsd(concept)) : ""}
                       onBlur={(e) => {
                         const val = parseFormattedNumber(e.target.value);
-                        updateConceptValue(concept.id, String(val), "usd");
+                        if (concept.isBase) {
+                          updateBasePriceFromInput(val, "usd");
+                        } else {
+                          updateConceptValue(concept.id, String(val), "usd");
+                        }
                       }}
-                      disabled={concept.isBase}
                     />
                   </TableCell>
                   <TableCell className="w-[140px] min-w-[140px]">
                     <Input
-                      key={`${concept.id}-usdGal-${concept.isBase ? formatNumber(basePrice) : (concept.inputType !== "usdGal" ? formatNumber(calculateUsdGal(concept)) : "edit")}`}
+                      key={`${concept.id}-usdGal-${decimalPlaces}-${concept.isBase ? (basePriceInputType !== "usdGal" ? formatNumber(basePrice) : "edit") : (concept.inputType !== "usdGal" ? formatNumber(calculateUsdGal(concept)) : "edit")}`}
                       type="text"
                       defaultValue={concept.isBase ? (basePrice !== 0 ? formatNumber(basePrice) : "") : (calculateUsdGal(concept) !== 0 ? formatNumber(calculateUsdGal(concept)) : "")}
                       onBlur={(e) => {
                         const val = parseFormattedNumber(e.target.value);
                         if (concept.isBase) {
-                          setBasePrice(val);
+                          updateBasePriceFromInput(val, "usdGal");
                         } else {
                           updateConceptValue(concept.id, String(val), "usdGal");
                         }
@@ -846,7 +881,7 @@ export function Calculator() {
                 <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">MARGIN</TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    key={`margin-mxnLtr-${marginInputType !== "mxnLtr" ? formatNumber(marginValues.mxnLtr) : "edit"}`}
+                    key={`margin-mxnLtr-${decimalPlaces}-${marginInputType !== "mxnLtr" ? formatNumber(marginValues.mxnLtr) : "edit"}`}
                     type="text"
                     defaultValue={marginValues.mxnLtr !== 0 ? formatNumber(marginValues.mxnLtr) : ""}
                     onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxnLtr"); }}
@@ -854,7 +889,7 @@ export function Calculator() {
                 </TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    key={`margin-mxn-${marginInputType !== "mxn" ? formatNumber(marginValues.mxn) : "edit"}`}
+                    key={`margin-mxn-${decimalPlaces}-${marginInputType !== "mxn" ? formatNumber(marginValues.mxn) : "edit"}`}
                     type="text"
                     defaultValue={marginValues.mxn !== 0 ? formatNumber(marginValues.mxn) : ""}
                     onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("mxn"); }}
@@ -862,7 +897,7 @@ export function Calculator() {
                 </TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    key={`margin-usd-${marginInputType !== "usd" ? formatNumber(marginValues.usd) : "edit"}`}
+                    key={`margin-usd-${decimalPlaces}-${marginInputType !== "usd" ? formatNumber(marginValues.usd) : "edit"}`}
                     type="text"
                     defaultValue={marginValues.usd !== 0 ? formatNumber(marginValues.usd) : ""}
                     onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usd"); }}
@@ -870,7 +905,7 @@ export function Calculator() {
                 </TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
-                    key={`margin-usdGal-${marginInputType !== "usdGal" ? formatNumber(marginValues.usdGal) : "edit"}`}
+                    key={`margin-usdGal-${decimalPlaces}-${marginInputType !== "usdGal" ? formatNumber(marginValues.usdGal) : "edit"}`}
                     type="text"
                     defaultValue={marginValues.usdGal !== 0 ? formatNumber(marginValues.usdGal) : ""}
                     onBlur={(e) => { setMargin(parseFormattedNumber(e.target.value)); setMarginInputType("usdGal"); }}

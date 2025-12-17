@@ -35,10 +35,16 @@ async function fetchData(symbol: string) {
     price: prices[index],
   })).filter((item: any) => item.price !== null);
 
+  // Calculate change from previous day's close
+  const currentPrice = quote.regularMarketPrice || 0;
+  const previousClose = quote.chartPreviousClose || (historicalData.length > 1 ? historicalData[historicalData.length - 2].price : currentPrice);
+  const change = currentPrice - previousClose;
+  const changePercent = previousClose !== 0 ? (change / previousClose) * 100 : 0;
+
   return {
-    price: quote.regularMarketPrice || 0,
-    change: quote.regularMarketChange || 0,
-    changePercent: quote.regularMarketChangePercent || 0,
+    price: currentPrice,
+    change: change,
+    changePercent: changePercent,
     timestamp: quote.regularMarketTime || Date.now() / 1000,
     currency: quote.currency || 'USD',
     symbol: symbol,

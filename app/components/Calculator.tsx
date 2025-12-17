@@ -359,11 +359,9 @@ export function Calculator() {
       if (response.ok) {
         await loadPresets();
         setPresetName("");
-        alert(t("calculator.presetSaved", { name: presetName }));
       }
     } catch (error) {
       console.error("Failed to save preset:", error);
-      alert(t("calculator.failedToSavePreset"));
     }
   };
 
@@ -378,19 +376,13 @@ export function Calculator() {
     setMargin(preset.margin);
     setMarginInputType(preset.marginInputType as any);
     setConcepts(preset.concepts);
-    alert(t("calculator.presetLoaded", { name: preset.name }));
   };
 
   const updatePreset = async () => {
-    if (!selectedPreset) {
-      alert(t("calculator.selectPresetToUpdate"));
-      return;
-    }
+    if (!selectedPreset) return;
 
     const preset = presets.find(p => p.id === selectedPreset);
     if (!preset) return;
-
-    if (!confirm(t("calculator.updatePresetConfirm", { name: preset.name }))) return;
 
     try {
       const response = await fetch("/api/presets", {
@@ -411,19 +403,14 @@ export function Calculator() {
 
       if (response.ok) {
         await loadPresets();
-        alert(t("calculator.presetUpdated", { name: preset.name }));
       }
     } catch (error) {
       console.error("Failed to update preset:", error);
-      alert(t("calculator.failedToUpdatePreset"));
     }
   };
 
   const deletePreset = async () => {
-    if (!selectedPreset) {
-      alert(t("calculator.selectPresetToDelete"));
-      return;
-    }
+    if (!selectedPreset) return;
 
     const preset = presets.find(p => p.id === selectedPreset);
     if (!preset) return;
@@ -438,11 +425,9 @@ export function Calculator() {
       if (response.ok) {
         await loadPresets();
         setSelectedPreset("");
-        alert(t("calculator.presetDeleted", { name: preset.name }));
       }
     } catch (error) {
       console.error("Failed to delete preset:", error);
-      alert(t("calculator.failedToDeletePreset"));
     }
   };
 

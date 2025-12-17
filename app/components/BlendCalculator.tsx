@@ -139,14 +139,11 @@ export function BlendCalculator() {
       });
 
       if (response.ok) {
-        alert(t("blendCalculator.presetSaved").replace("{name}", presetName));
         setPresetName("");
         loadPresets();
-      } else {
-        alert(t("blendCalculator.failedToSavePreset"));
       }
     } catch (error) {
-      alert(t("blendCalculator.failedToSavePreset"));
+      console.error("Failed to save preset:", error);
     }
   };
 
@@ -155,22 +152,14 @@ export function BlendCalculator() {
     if (preset) {
       setProducts(preset.products.map(p => ({ ...p, id: crypto.randomUUID() })));
       setSelectedPresetId(id);
-      alert(t("blendCalculator.presetLoaded").replace("{name}", preset.name));
     }
   };
 
   const updatePreset = async () => {
-    if (!selectedPresetId) {
-      alert(t("blendCalculator.selectPresetToUpdate"));
-      return;
-    }
+    if (!selectedPresetId) return;
 
     const preset = presets.find((p) => p.id === selectedPresetId);
     if (!preset) return;
-
-    if (!confirm(t("blendCalculator.updatePresetConfirm").replace("{name}", preset.name))) {
-      return;
-    }
 
     try {
       const response = await fetch("/api/blend-presets", {
@@ -183,21 +172,15 @@ export function BlendCalculator() {
       });
 
       if (response.ok) {
-        alert(t("blendCalculator.presetUpdated").replace("{name}", preset.name));
         loadPresets();
-      } else {
-        alert(t("blendCalculator.failedToUpdatePreset"));
       }
     } catch (error) {
-      alert(t("blendCalculator.failedToUpdatePreset"));
+      console.error("Failed to update preset:", error);
     }
   };
 
   const deletePreset = async () => {
-    if (!selectedPresetId) {
-      alert(t("blendCalculator.selectPresetToDelete"));
-      return;
-    }
+    if (!selectedPresetId) return;
 
     const preset = presets.find((p) => p.id === selectedPresetId);
     if (!preset) return;
@@ -212,14 +195,11 @@ export function BlendCalculator() {
       });
 
       if (response.ok) {
-        alert(t("blendCalculator.presetDeleted").replace("{name}", preset.name));
         setSelectedPresetId("");
         loadPresets();
-      } else {
-        alert(t("blendCalculator.failedToDeletePreset"));
       }
     } catch (error) {
-      alert(t("blendCalculator.failedToDeletePreset"));
+      console.error("Failed to delete preset:", error);
     }
   };
 

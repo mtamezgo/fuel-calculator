@@ -5,6 +5,8 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { signUp, signInWithGoogle, useSession } from "~/lib/auth-client";
+import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { useTranslation } from "~/lib/i18n/context";
 import type { Route } from "./+types/register";
 
 export function meta({}: Route.MetaArgs) {
@@ -23,6 +25,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   // Redirect if already logged in
   if (session?.user) {
@@ -34,12 +37,12 @@ export default function Register() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("auth.passwordsDoNotMatch"));
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t("auth.passwordTooShort"));
       return;
     }
 
@@ -53,13 +56,13 @@ export default function Register() {
       });
       console.log("Signup result:", result);
       if (result.error) {
-        setError(result.error.message || "Failed to create account");
+        setError(result.error.message || t("auth.failedToCreateAccount"));
       } else {
         navigate("/");
       }
     } catch (err: any) {
       console.error("Signup error:", err);
-      setError(err.message || "Failed to create account");
+      setError(err.message || t("auth.failedToCreateAccount"));
     } finally {
       setLoading(false);
     }
@@ -69,7 +72,7 @@ export default function Register() {
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+      setError(err.message || t("auth.failedGoogleSignIn"));
     }
   };
 
@@ -77,11 +80,14 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-[#fafafa] p-4">
       <Card className="w-full max-w-md border border-[#dbdbdb]">
         <CardHeader className="text-center">
+          <div className="flex justify-end mb-2">
+            <LanguageSwitcher />
+          </div>
           <CardTitle className="text-2xl font-semibold text-[#262626]">
-            Fuel Calculator
+            {t("meta.appTitle")}
           </CardTitle>
           <CardDescription className="text-[#8e8e8e]">
-            Create your account
+            {t("auth.createYourAccount")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -110,7 +116,7 @@ export default function Register() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </Button>
 
           <div className="relative">
@@ -118,7 +124,7 @@ export default function Register() {
               <span className="w-full border-t border-[#dbdbdb]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-[#8e8e8e]">Or</span>
+              <span className="bg-white px-2 text-[#8e8e8e]">{t("common.or")}</span>
             </div>
           </div>
 
@@ -131,11 +137,11 @@ export default function Register() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Name (optional)</Label>
+              <Label htmlFor="name">{t("auth.nameOptional")}</Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder={t("auth.namePlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
@@ -143,11 +149,11 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -156,27 +162,27 @@ export default function Register() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
               />
               <p className="text-xs text-[#8e8e8e]">
-                Must be at least 8 characters
+                {t("auth.passwordMinLength")}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -189,15 +195,15 @@ export default function Register() {
               className="w-full bg-[#0095f6] hover:bg-[#1877f2]"
               disabled={loading}
             >
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-[#8e8e8e]">
-            Already have an account?{" "}
+            {t("auth.alreadyHaveAccount")}{" "}
             <Link to="/login" className="text-[#0095f6] hover:underline font-semibold">
-              Sign in
+              {t("auth.signIn")}
             </Link>
           </p>
         </CardFooter>

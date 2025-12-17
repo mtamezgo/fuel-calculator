@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "~/components/ui/card";
 import { TrendingUp, TrendingDown, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useTranslation } from "~/lib/i18n/context";
 
 interface HistoricalData {
   date: number;
@@ -29,13 +30,15 @@ function FuelPriceCard({
   title,
   expanded,
   onToggle,
-  isExchangeRate = false
+  isExchangeRate = false,
+  t,
 }: {
   data: FuelPrice;
   title: string;
   expanded: boolean;
   onToggle: () => void;
   isExchangeRate?: boolean;
+  t: (key: string) => string;
 }) {
   const isPositive = data.change >= 0;
 
@@ -135,7 +138,7 @@ function FuelPriceCard({
                     borderRadius: '4px',
                     fontSize: '12px',
                   }}
-                  formatter={(value: any) => [isExchangeRate ? value.toFixed(4) : `$${value.toFixed(4)}`, 'Price']}
+                  formatter={(value: any) => [isExchangeRate ? value.toFixed(4) : `$${value.toFixed(4)}`, t("gasPrices.price")]}
                 />
                 <Line
                   type="monotone"
@@ -147,14 +150,14 @@ function FuelPriceCard({
               </LineChart>
             </ResponsiveContainer>
             <div className="text-xs text-[#8e8e8e] text-center mt-2">
-              30-day price history
+              {t("gasPrices.priceHistory")}
             </div>
           </div>
 
           {/* Key Info Panel */}
           <div className="w-full sm:w-[200px] space-y-4">
             <div className="hidden sm:block">
-              <div className="text-xs text-[#8e8e8e] uppercase tracking-wide mb-2">Current Price</div>
+              <div className="text-xs text-[#8e8e8e] uppercase tracking-wide mb-2">{t("gasPrices.currentPrice")}</div>
               <div className="text-2xl font-bold text-[#262626]">
                 {formatPrice(data.price)}
               </div>
@@ -168,19 +171,19 @@ function FuelPriceCard({
 
             <div className="border-t border-[#dbdbdb] pt-4 grid grid-cols-3 sm:grid-cols-1 gap-3 sm:space-y-3 sm:gap-0">
               <div>
-                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day High</div>
+                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">{t("gasPrices.thirtyDayHigh")}</div>
                 <div className="text-base sm:text-lg font-semibold text-[#262626]">
                   {formatPrice(stats.high)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day Low</div>
+                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">{t("gasPrices.thirtyDayLow")}</div>
                 <div className="text-base sm:text-lg font-semibold text-[#262626]">
                   {formatPrice(stats.low)}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">30-Day Avg</div>
+                <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">{t("gasPrices.thirtyDayAvg")}</div>
                 <div className="text-base sm:text-lg font-semibold text-[#262626]">
                   {formatPrice(stats.avg)}
                 </div>
@@ -188,7 +191,7 @@ function FuelPriceCard({
             </div>
 
             <div className="border-t border-[#dbdbdb] pt-4 hidden sm:block">
-              <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">Symbol</div>
+              <div className="text-xs text-[#8e8e8e] uppercase tracking-wide">{t("gasPrices.symbol")}</div>
               <div className="text-sm font-medium text-[#262626] mt-1">
                 {data.symbol}
               </div>
@@ -207,6 +210,7 @@ export function GasPriceWidget() {
   const [expandedRbob, setExpandedRbob] = useState(false);
   const [expandedHeatingOil, setExpandedHeatingOil] = useState(false);
   const [expandedUsdMxn, setExpandedUsdMxn] = useState(false);
+  const { t } = useTranslation();
 
   const fetchPrice = async () => {
     try {
@@ -215,13 +219,13 @@ export function GasPriceWidget() {
       const response = await fetch('/api/gas-prices');
 
       if (!response.ok) {
-        throw new Error('Failed to fetch fuel prices');
+        throw new Error(t("gasPrices.failedToLoadPrices"));
       }
 
       const data = await response.json();
       setPriceData(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load fuel prices');
+      setError(err.message || t("gasPrices.failedToLoadPrices"));
     } finally {
       setLoading(false);
     }
@@ -239,7 +243,7 @@ export function GasPriceWidget() {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 text-sm text-[#8e8e8e]">
             <RefreshCw className="h-4 w-4 animate-spin" />
-            Loading fuel prices...
+            {t("gasPrices.loadingFuelPrices")}
           </div>
         </CardContent>
       </Card>
@@ -270,26 +274,29 @@ export function GasPriceWidget() {
               {expandedRbob && (
                 <FuelPriceCard
                   data={priceData.rbob}
-                  title="RBOB Gasoline"
+                  title={t("gasPrices.rbobGasoline")}
                   expanded={expandedRbob}
                   onToggle={() => setExpandedRbob(!expandedRbob)}
+                  t={t}
                 />
               )}
               {expandedHeatingOil && (
                 <FuelPriceCard
                   data={priceData.heatingOil}
-                  title="Heating Oil"
+                  title={t("gasPrices.heatingOil")}
                   expanded={expandedHeatingOil}
                   onToggle={() => setExpandedHeatingOil(!expandedHeatingOil)}
+                  t={t}
                 />
               )}
               {expandedUsdMxn && (
                 <FuelPriceCard
                   data={priceData.usdMxn}
-                  title="USD/MXN"
+                  title={t("gasPrices.usdMxn")}
                   expanded={expandedUsdMxn}
                   onToggle={() => setExpandedUsdMxn(!expandedUsdMxn)}
                   isExchangeRate={true}
+                  t={t}
                 />
               )}
             </div>
@@ -298,31 +305,34 @@ export function GasPriceWidget() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
               <FuelPriceCard
                 data={priceData.rbob}
-                title="RBOB Gasoline"
+                title={t("gasPrices.rbobGasoline")}
                 expanded={expandedRbob}
                 onToggle={() => setExpandedRbob(!expandedRbob)}
+                t={t}
               />
               <div className="hidden sm:block h-12 w-px bg-[#dbdbdb]" />
               <div className="sm:hidden w-full h-px bg-[#dbdbdb]" />
               <FuelPriceCard
                 data={priceData.heatingOil}
-                title="Heating Oil"
+                title={t("gasPrices.heatingOil")}
                 expanded={expandedHeatingOil}
                 onToggle={() => setExpandedHeatingOil(!expandedHeatingOil)}
+                t={t}
               />
               <div className="hidden sm:block h-12 w-px bg-[#dbdbdb]" />
               <div className="sm:hidden w-full h-px bg-[#dbdbdb]" />
               <FuelPriceCard
                 data={priceData.usdMxn}
-                title="USD/MXN"
+                title={t("gasPrices.usdMxn")}
                 expanded={expandedUsdMxn}
                 onToggle={() => setExpandedUsdMxn(!expandedUsdMxn)}
                 isExchangeRate={true}
+                t={t}
               />
               <button
                 onClick={fetchPrice}
                 className="text-[#8e8e8e] hover:text-[#262626] transition-colors flex-shrink-0 sm:mt-2 self-center sm:self-auto"
-                title="Refresh"
+                title={t("common.refresh")}
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               </button>

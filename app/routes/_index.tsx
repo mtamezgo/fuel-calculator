@@ -4,6 +4,8 @@ import { useSession, signOut } from "~/lib/auth-client";
 import { Button } from "~/components/ui/button";
 import { Calculator } from "~/components/Calculator";
 import { GasPriceWidget } from "~/components/GasPriceWidget";
+import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { useTranslation } from "~/lib/i18n/context";
 import type { Route } from "./+types/_index";
 
 export function meta({}: Route.MetaArgs) {
@@ -16,6 +18,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Index() {
   const { data: session, isPending } = useSession();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isPending && !session?.user) {
@@ -26,7 +29,7 @@ export default function Index() {
   if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fafafa]">
-        <div className="text-[#8e8e8e]">Loading...</div>
+        <div className="text-[#8e8e8e]">{t("common.loading")}</div>
       </div>
     );
   }
@@ -46,9 +49,10 @@ export default function Index() {
       <header className="bg-white border-b border-[#dbdbdb] sticky top-0 z-10">
         <div className="max-w-[935px] mx-auto px-4 sm:px-5 py-3 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
           <h1 className="text-xl sm:text-2xl font-semibold text-[#262626]">
-            Fuel Margin Calculator
+            {t("calculator.title")}
           </h1>
           <div className="flex items-center gap-2 sm:gap-4">
+            <LanguageSwitcher />
             <span className="text-xs sm:text-sm text-[#8e8e8e] truncate max-w-[150px] sm:max-w-none">
               {session.user.email}
             </span>
@@ -58,7 +62,7 @@ export default function Index() {
               onClick={handleSignOut}
               className="text-[#0095f6] hover:text-[#1877f2] text-xs sm:text-sm"
             >
-              Sign out
+              {t("common.signOut")}
             </Button>
           </div>
         </div>

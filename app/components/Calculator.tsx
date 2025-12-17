@@ -21,6 +21,7 @@ import {
 import { GripVertical, Trash2, Plus, Share2, FileDown, ChevronUp, ChevronDown } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useTranslation } from "~/lib/i18n/context";
 
 // Constants
 const LITERS_PER_GALLON = 3.78541;
@@ -47,6 +48,8 @@ interface Preset {
 }
 
 export function Calculator() {
+  const { t } = useTranslation();
+
   // State
   const [exchangeRate, setExchangeRate] = useState(0);
   const [basePrice, setBasePrice] = useState(0);
@@ -69,7 +72,7 @@ export function Calculator() {
     if (concepts.length === 0) {
       setConcepts([{
         id: Date.now(),
-        name: "Molecule Price",
+        name: t("calculator.moleculePrice"),
         value: 0,
         inputType: "usdGal",
         isBase: true,
@@ -254,7 +257,7 @@ export function Calculator() {
       setExchangeRate(data.rates.MXN);
     } catch (error) {
       console.error("Failed to fetch exchange rate:", error);
-      alert("Failed to fetch exchange rate. Please enter manually.");
+      alert(t("calculator.fetchRateFailed"));
     }
   };
 
@@ -271,7 +274,7 @@ export function Calculator() {
   const addConcept = () => {
     setConcepts([...concepts, {
       id: Date.now(),
-      name: "New Cost",
+      name: t("calculator.newCost"),
       value: 0,
       inputType: "mxnLtr",
     }]);
@@ -333,7 +336,7 @@ export function Calculator() {
   // Preset management
   const savePreset = async () => {
     if (!presetName.trim()) {
-      alert("Please enter a preset name");
+      alert(t("calculator.enterPresetNameAlert"));
       return;
     }
 
@@ -356,11 +359,11 @@ export function Calculator() {
       if (response.ok) {
         await loadPresets();
         setPresetName("");
-        alert(`Preset "${presetName}" saved successfully!`);
+        alert(t("calculator.presetSaved", { name: presetName }));
       }
     } catch (error) {
       console.error("Failed to save preset:", error);
-      alert("Failed to save preset");
+      alert(t("calculator.failedToSavePreset"));
     }
   };
 
@@ -375,19 +378,19 @@ export function Calculator() {
     setMargin(preset.margin);
     setMarginInputType(preset.marginInputType as any);
     setConcepts(preset.concepts);
-    alert(`Preset "${preset.name}" loaded successfully!`);
+    alert(t("calculator.presetLoaded", { name: preset.name }));
   };
 
   const updatePreset = async () => {
     if (!selectedPreset) {
-      alert("Please select a preset to update");
+      alert(t("calculator.selectPresetToUpdate"));
       return;
     }
 
     const preset = presets.find(p => p.id === selectedPreset);
     if (!preset) return;
 
-    if (!confirm(`Update preset "${preset.name}" with current values?`)) return;
+    if (!confirm(t("calculator.updatePresetConfirm", { name: preset.name }))) return;
 
     try {
       const response = await fetch("/api/presets", {
@@ -408,24 +411,24 @@ export function Calculator() {
 
       if (response.ok) {
         await loadPresets();
-        alert(`Preset "${preset.name}" updated successfully!`);
+        alert(t("calculator.presetUpdated", { name: preset.name }));
       }
     } catch (error) {
       console.error("Failed to update preset:", error);
-      alert("Failed to update preset");
+      alert(t("calculator.failedToUpdatePreset"));
     }
   };
 
   const deletePreset = async () => {
     if (!selectedPreset) {
-      alert("Please select a preset to delete");
+      alert(t("calculator.selectPresetToDelete"));
       return;
     }
 
     const preset = presets.find(p => p.id === selectedPreset);
     if (!preset) return;
 
-    if (!confirm(`Are you sure you want to delete preset "${preset.name}"?`)) return;
+    if (!confirm(t("calculator.deletePresetConfirm", { name: preset.name }))) return;
 
     try {
       const response = await fetch(`/api/presets?id=${selectedPreset}`, {
@@ -435,11 +438,11 @@ export function Calculator() {
       if (response.ok) {
         await loadPresets();
         setSelectedPreset("");
-        alert(`Preset "${preset.name}" deleted successfully!`);
+        alert(t("calculator.presetDeleted", { name: preset.name }));
       }
     } catch (error) {
       console.error("Failed to delete preset:", error);
-      alert("Failed to delete preset");
+      alert(t("calculator.failedToDeletePreset"));
     }
   };
 
@@ -497,8 +500,8 @@ export function Calculator() {
       // Check if we're on mobile and can use Web Share API
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: "Fuel Calculator Results",
-          text: `Exchange Rate: ${formatNumber(exchangeRate, 4)}\nTotal Cost: ${formatNumber(totals.mxn)} MXN`,
+          title: t("calculator.shareTitle"),
+          text: `${t("calculator.exchangeRate")}: ${formatNumber(exchangeRate, 4)}\n${t("calculator.totalCost")}: ${formatNumber(totals.mxn)} MXN`,
           files: [file],
         });
       } else {
@@ -514,21 +517,21 @@ export function Calculator() {
 
         // Provide WhatsApp links
         const text = encodeURIComponent(
-          `Fuel Calculator Results\nExchange Rate: ${formatNumber(exchangeRate, 4)}\nTotal Cost: ${formatNumber(totals.mxn)} MXN`
+          `${t("calculator.shareTitle")}\n${t("calculator.exchangeRate")}: ${formatNumber(exchangeRate, 4)}\n${t("calculator.totalCost")}: ${formatNumber(totals.mxn)} MXN`
         );
         const whatsappWeb = `https://web.whatsapp.com/send?text=${text}`;
         const whatsappDesktop = `whatsapp://send?text=${text}`;
 
         // Show options to user
-        if (confirm("Image downloaded! Would you like to open WhatsApp Web to share?")) {
+        if (confirm(t("calculator.imageDownloaded"))) {
           window.open(whatsappWeb, "_blank");
-        } else if (confirm("Would you like to open WhatsApp Desktop?")) {
+        } else if (confirm(t("calculator.openWhatsAppDesktop"))) {
           window.location.href = whatsappDesktop;
         }
       }
     } catch (error) {
       console.error("Failed to share:", error);
-      alert("Failed to create shareable image");
+      alert(t("calculator.failedToCreateImage"));
     } finally {
       setIsSharing(false);
     }
@@ -597,7 +600,7 @@ export function Calculator() {
       pdf.save("fuel-calculator.pdf");
     } catch (error) {
       console.error("Failed to export PDF:", error);
-      alert("Failed to create PDF");
+      alert(t("calculator.failedToCreatePdf"));
     } finally {
       setIsSharing(false);
     }
@@ -609,11 +612,11 @@ export function Calculator() {
       <div className="bg-[#fafafa] p-3 sm:p-4 rounded-sm border border-[#dbdbdb]">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label className="text-sm">Presets</Label>
+            <Label className="text-sm">{t("calculator.presets")}</Label>
             <div className="flex flex-col sm:flex-row gap-2">
               <Select value={selectedPreset} onValueChange={setSelectedPreset}>
                 <SelectTrigger className="w-full sm:flex-1">
-                  <SelectValue placeholder="-- Select a Preset --" />
+                  <SelectValue placeholder={t("calculator.selectPreset")} />
                 </SelectTrigger>
                 <SelectContent>
                   {presets.map((preset) => (
@@ -625,28 +628,28 @@ export function Calculator() {
               </Select>
               <div className="flex gap-2">
                 <Button size="sm" className="flex-1 sm:flex-none" onClick={() => selectedPreset && loadPreset(selectedPreset)}>
-                  Load
+                  {t("common.load")}
                 </Button>
                 <Button size="sm" variant="secondary" className="flex-1 sm:flex-none" onClick={updatePreset}>
-                  Update
+                  {t("common.update")}
                 </Button>
                 <Button variant="destructive" size="sm" className="flex-1 sm:flex-none" onClick={deletePreset}>
-                  Delete
+                  {t("common.delete")}
                 </Button>
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">Save New Preset</Label>
+            <Label className="text-sm">{t("calculator.saveNewPreset")}</Label>
             <div className="flex gap-2">
               <Input
-                placeholder="Enter preset name"
+                placeholder={t("calculator.enterPresetName")}
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
                 className="flex-1"
               />
-              <Button size="sm" onClick={savePreset}>Save</Button>
+              <Button size="sm" onClick={savePreset}>{t("common.save")}</Button>
             </div>
           </div>
         </div>
@@ -655,25 +658,25 @@ export function Calculator() {
       {/* Input Controls */}
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-sm">Exchange Rate (MXN per USD)</Label>
+          <Label className="text-sm">{t("calculator.exchangeRate")}</Label>
           <div className="flex flex-col sm:flex-row gap-2">
             <Input
               type="number"
               step="0.0001"
-              placeholder="Enter exchange rate"
+              placeholder={t("calculator.enterExchangeRate")}
               value={exchangeRate || ""}
               onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0)}
               className="flex-1"
             />
             <Button variant="secondary" size="sm" className="whitespace-nowrap" onClick={handleExchangeRateFetch}>
-              Fetch Rate
+              {t("calculator.fetchRate")}
             </Button>
           </div>
         </div>
 
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label className="text-sm">Base Price (USD/Gal)</Label>
+            <Label className="text-sm">{t("calculator.basePrice")}</Label>
             <Input
               key={`basePrice-${basePrice}-${basePriceInputType}`}
               type="text"
@@ -687,7 +690,7 @@ export function Calculator() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">Gallons</Label>
+            <Label className="text-sm">{t("calculator.gallons")}</Label>
             <Input
               key={`gallons-${gallons}`}
               type="text"
@@ -698,7 +701,7 @@ export function Calculator() {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">Liters</Label>
+            <Label className="text-sm">{t("calculator.liters")}</Label>
             <Input
               key={`liters-${liters}`}
               type="text"
@@ -713,24 +716,24 @@ export function Calculator() {
       {/* Table Section */}
       <div className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <h2 className="text-base sm:text-lg font-semibold text-[#262626]">Cost Breakdown</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-[#262626]">{t("calculator.costBreakdown")}</h2>
           <div className="grid grid-cols-2 sm:flex gap-2">
             <Button variant="secondary" size="sm" className="text-xs sm:text-sm" onClick={shareToWhatsApp} disabled={isSharing}>
               <Share2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">{isSharing ? "Creating..." : "Share"}</span>
-              <span className="sm:hidden">{isSharing ? "..." : "Share"}</span>
+              <span className="hidden sm:inline">{isSharing ? t("common.creating") : t("common.share")}</span>
+              <span className="sm:hidden">{isSharing ? "..." : t("common.share")}</span>
             </Button>
             <Button variant="secondary" size="sm" className="text-xs sm:text-sm" onClick={exportToPdf} disabled={isSharing}>
               <FileDown className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">{isSharing ? "Creating..." : "PDF"}</span>
-              <span className="sm:hidden">{isSharing ? "..." : "PDF"}</span>
+              <span className="hidden sm:inline">{isSharing ? t("common.creating") : t("calculator.pdf")}</span>
+              <span className="sm:hidden">{isSharing ? "..." : t("calculator.pdf")}</span>
             </Button>
             <Button variant="secondary" size="sm" className="text-xs sm:text-sm" onClick={() => setDecimalPlaces(decimalPlaces === 4 ? 2 : 4)}>
-              {decimalPlaces === 4 ? 2 : 4} Dec
+              {decimalPlaces === 4 ? 2 : 4} {t("calculator.dec")}
             </Button>
             <Button size="sm" className="text-xs sm:text-sm" onClick={addConcept}>
               <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Add
+              {t("common.add")}
             </Button>
           </div>
         </div>
@@ -739,12 +742,12 @@ export function Calculator() {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#fafafa]">
-                <TableHead className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">CONCEPT</TableHead>
-                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">MXN/LTR</TableHead>
-                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">MXN</TableHead>
-                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">USD</TableHead>
-                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">USD/GAL</TableHead>
-                {!isSharing && <TableHead className="font-semibold text-[#262626] w-[100px] min-w-[100px]">ACTIONS</TableHead>}
+                <TableHead className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">{t("calculator.concept")}</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">{t("calculator.mxnLtr")}</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">{t("calculator.mxn")}</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">{t("calculator.usd")}</TableHead>
+                <TableHead className="font-semibold text-[#262626] w-[140px] min-w-[140px]">{t("calculator.usdGal")}</TableHead>
+                {!isSharing && <TableHead className="font-semibold text-[#262626] w-[100px] min-w-[100px]">{t("calculator.actions")}</TableHead>}
               </TableRow>
             </TableHeader>
 
@@ -869,7 +872,7 @@ export function Calculator() {
 
             <TableFooter className="bg-[#fafafa]">
               <TableRow className="border-t-2 border-[#dbdbdb]">
-                <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">TOTAL COST</TableCell>
+                <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">{t("calculator.totalCost")}</TableCell>
                 <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.mxnLtr)}</TableCell>
                 <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.mxn)}</TableCell>
                 <TableCell className="font-semibold w-[140px] min-w-[140px]">{formatNumber(totals.usd)}</TableCell>
@@ -878,7 +881,7 @@ export function Calculator() {
               </TableRow>
 
               <TableRow className="border-t border-[#efefef]">
-                <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">MARGIN</TableCell>
+                <TableCell className="font-semibold text-[#262626] w-[200px] min-w-[200px] pr-4">{t("calculator.margin")}</TableCell>
                 <TableCell className="w-[140px] min-w-[140px]">
                   <Input
                     key={`margin-mxnLtr-${decimalPlaces}-${marginInputType !== "mxnLtr" ? formatNumber(marginValues.mxnLtr) : "edit"}`}
@@ -915,7 +918,7 @@ export function Calculator() {
               </TableRow>
 
               <TableRow className="border-t border-[#efefef]">
-                <TableCell className="font-bold text-[#0095f6] w-[200px] min-w-[200px] pr-4">SALE PRICE</TableCell>
+                <TableCell className="font-bold text-[#0095f6] w-[200px] min-w-[200px] pr-4">{t("calculator.salePrice")}</TableCell>
                 <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.mxnLtr)}</TableCell>
                 <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.mxn)}</TableCell>
                 <TableCell className="font-bold text-[#0095f6] w-[140px] min-w-[140px]">{formatNumber(salePrice.usd)}</TableCell>

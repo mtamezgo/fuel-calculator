@@ -5,6 +5,8 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { signIn, signInWithGoogle, useSession } from "~/lib/auth-client";
+import { LanguageSwitcher } from "~/components/LanguageSwitcher";
+import { useTranslation } from "~/lib/i18n/context";
 import type { Route } from "./+types/login";
 
 export function meta({}: Route.MetaArgs) {
@@ -21,6 +23,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { data: session } = useSession();
+  const { t } = useTranslation();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -41,13 +44,13 @@ export default function Login() {
       });
       console.log("Login result:", result);
       if (result.error) {
-        setError(result.error.message || "Invalid email or password");
+        setError(result.error.message || t("auth.invalidCredentials"));
       } else {
         navigate("/");
       }
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message || "Invalid email or password");
+      setError(err.message || t("auth.invalidCredentials"));
     } finally {
       setLoading(false);
     }
@@ -61,7 +64,7 @@ export default function Login() {
       console.log("Google sign-in result:", result);
     } catch (err: any) {
       console.error("Google sign-in error:", err);
-      setError(err.message || "Failed to sign in with Google");
+      setError(err.message || t("auth.failedGoogleSignIn"));
     } finally {
       setLoading(false);
     }
@@ -71,11 +74,14 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-[#fafafa] p-4">
       <Card className="w-full max-w-md border border-[#dbdbdb]">
         <CardHeader className="text-center">
+          <div className="flex justify-end mb-2">
+            <LanguageSwitcher />
+          </div>
           <CardTitle className="text-2xl font-semibold text-[#262626]">
-            Fuel Calculator
+            {t("meta.appTitle")}
           </CardTitle>
           <CardDescription className="text-[#8e8e8e]">
-            Sign in to your account
+            {t("auth.signInToAccount")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -104,7 +110,7 @@ export default function Login() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </Button>
 
           <div className="relative">
@@ -112,7 +118,7 @@ export default function Login() {
               <span className="w-full border-t border-[#dbdbdb]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-[#8e8e8e]">Or</span>
+              <span className="bg-white px-2 text-[#8e8e8e]">{t("common.or")}</span>
             </div>
           </div>
 
@@ -125,11 +131,11 @@ export default function Login() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -138,11 +144,11 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -155,15 +161,15 @@ export default function Login() {
               className="w-full bg-[#0095f6] hover:bg-[#1877f2]"
               disabled={loading}
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-[#8e8e8e]">
-            Don't have an account?{" "}
+            {t("auth.dontHaveAccount")}{" "}
             <Link to="/register" className="text-[#0095f6] hover:underline font-semibold">
-              Sign up
+              {t("auth.signUp")}
             </Link>
           </p>
         </CardFooter>

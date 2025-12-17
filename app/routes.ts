@@ -6,5 +6,6 @@ export default [
   route("register", "routes/register.tsx"),
   route("api/auth/*", "routes/api.auth.$.ts"),
   route("api/presets", "routes/api.presets.ts"),
+  route("api/blend-presets", "routes/api.blend-presets.ts"),
   route("api/gas-prices", "routes/api.gas-prices.ts"),
 ] satisfies RouteConfig;

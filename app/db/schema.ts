@@ -67,7 +67,20 @@ export const presets = pgTable("presets", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const blendPresets = pgTable("blend_presets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  products: jsonb("products").notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Preset = typeof presets.$inferSelect;
 export type NewPreset = typeof presets.$inferInsert;
+export type BlendPreset = typeof blendPresets.$inferSelect;
+export type NewBlendPreset = typeof blendPresets.$inferInsert;

@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSession, signOut } from "~/lib/auth-client";
 import { Button } from "~/components/ui/button";
 import { Calculator } from "~/components/Calculator";
+import { BlendCalculator } from "~/components/BlendCalculator";
 import { GasPriceWidget } from "~/components/GasPriceWidget";
 import { LanguageSwitcher } from "~/components/LanguageSwitcher";
 import { useTranslation } from "~/lib/i18n/context";
@@ -19,6 +20,7 @@ export default function Index() {
   const { data: session, isPending } = useSession();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<"margin" | "blend">("margin");
 
   useEffect(() => {
     if (!isPending && !session?.user) {
@@ -73,9 +75,35 @@ export default function Index() {
         {/* Gas Price Widget - Full Width at Top */}
         <GasPriceWidget />
 
-        {/* Calculator */}
-        <div className="bg-white border border-[#dbdbdb] rounded-sm shadow-sm p-3 sm:p-6">
-          <Calculator />
+        {/* Tab Navigation */}
+        <div className="bg-white border border-[#dbdbdb] rounded-sm shadow-sm">
+          <div className="flex border-b border-[#dbdbdb]">
+            <button
+              onClick={() => setActiveTab("margin")}
+              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                activeTab === "margin"
+                  ? "text-[#0095f6] border-b-2 border-[#0095f6] -mb-px"
+                  : "text-[#8e8e8e] hover:text-[#262626]"
+              }`}
+            >
+              {t("calculator.title")}
+            </button>
+            <button
+              onClick={() => setActiveTab("blend")}
+              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                activeTab === "blend"
+                  ? "text-[#0095f6] border-b-2 border-[#0095f6] -mb-px"
+                  : "text-[#8e8e8e] hover:text-[#262626]"
+              }`}
+            >
+              {t("blendCalculator.title")}
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-3 sm:p-6">
+            {activeTab === "margin" ? <Calculator /> : <BlendCalculator />}
+          </div>
         </div>
       </main>
     </div>

@@ -20,6 +20,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:5173",
     "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
     "https://fuel-calculator-teal.vercel.app",
     process.env.BETTER_AUTH_URL || "",
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "",

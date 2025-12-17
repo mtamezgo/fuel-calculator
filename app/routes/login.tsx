@@ -54,10 +54,16 @@ export default function Login() {
   };
 
   const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
     try {
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      console.log("Google sign-in result:", result);
     } catch (err: any) {
+      console.error("Google sign-in error:", err);
       setError(err.message || "Failed to sign in with Google");
+    } finally {
+      setLoading(false);
     }
   };
 

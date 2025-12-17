@@ -109,6 +109,7 @@
     "percentage": "Porcentaje",
     "actions": "Acciones",
     "addProduct": "Agregar Producto",
+    "total": "Total",
     "totalPercentage": "Porcentaje Total",
     "percentageError": "Los porcentajes deben sumar 100%",
     "blendPrice": "Precio de Mezcla",

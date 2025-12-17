@@ -4,6 +4,8 @@ import { Input } from "~/components/ui/input";
 import { Trash2, Plus } from "lucide-react";
 import { useTranslation } from "~/lib/i18n/context";
 
+const LITERS_PER_GALLON = 3.78541;
+
 interface BlendProduct {
   id: string;
   name: string;
@@ -17,33 +19,44 @@ interface BlendPreset {
   products: BlendProduct[];
 }
 
+// Format number with commas and decimal places
+function formatNumberWithCommas(num: number, decimals: number = 4): string {
+  if (!num && num !== 0) return "";
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(num);
+}
+
 // Individual input component that handles its own local state
 function NumberInput({
   value,
   onChange,
   placeholder,
   className,
+  decimals = 4,
 }: {
   value: number;
   onChange: (value: number) => void;
   placeholder: string;
   className?: string;
+  decimals?: number;
 }) {
-  const [localValue, setLocalValue] = useState(value ? value.toString() : "");
+  const [localValue, setLocalValue] = useState(value ? formatNumberWithCommas(value, decimals) : "");
 
   // Update local value when external value changes
   useEffect(() => {
-    setLocalValue(value ? value.toString() : "");
-  }, [value]);
+    setLocalValue(value ? formatNumberWithCommas(value, decimals) : "");
+  }, [value, decimals]);
 
   const handleBlur = () => {
     const cleaned = localValue.replace(/,/g, "");
     const num = parseFloat(cleaned);
     if (!isNaN(num)) {
       onChange(num);
-      setLocalValue(num.toString());
+      setLocalValue(formatNumberWithCommas(num, decimals));
     } else {
-      setLocalValue(value ? value.toString() : "");
+      setLocalValue(value ? formatNumberWithCommas(value, decimals) : "");
     }
   };
 
@@ -68,6 +81,8 @@ export function BlendCalculator() {
   const [presets, setPresets] = useState<BlendPreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [presetName, setPresetName] = useState("");
+  const [totalGallons, setTotalGallons] = useState(0);
+  const [totalLiters, setTotalLiters] = useState(0);
 
   // Load presets on mount
   useEffect(() => {
@@ -119,6 +134,40 @@ export function BlendCalculator() {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     }).format(num);
+  };
+
+  // Conversion helpers
+  const gallonsToLiters = (gal: number) => gal * LITERS_PER_GALLON;
+  const litersToGallons = (ltr: number) => ltr / LITERS_PER_GALLON;
+
+  // Calculate gallons/liters for a product based on percentage
+  const getProductGallons = (percentage: number) => totalGallons * (percentage / 100);
+  const getProductLiters = (percentage: number) => totalLiters * (percentage / 100);
+
+  // Update total gallons (and sync liters)
+  const handleTotalGallonsChange = (value: number) => {
+    setTotalGallons(value);
+    setTotalLiters(gallonsToLiters(value));
+  };
+
+  // Update total liters (and sync gallons)
+  const handleTotalLitersChange = (value: number) => {
+    setTotalLiters(value);
+    setTotalGallons(litersToGallons(value));
+  };
+
+  // Update product percentage from gallons input
+  const updateProductFromGallons = (id: string, gallons: number) => {
+    if (totalGallons <= 0) return;
+    const newPercentage = (gallons / totalGallons) * 100;
+    updateProduct(id, "percentage", newPercentage);
+  };
+
+  // Update product percentage from liters input
+  const updateProductFromLiters = (id: string, liters: number) => {
+    if (totalLiters <= 0) return;
+    const newPercentage = (liters / totalLiters) * 100;
+    updateProduct(id, "percentage", newPercentage);
   };
 
   // Preset functions
@@ -292,6 +341,12 @@ export function BlendCalculator() {
                 <th className="text-left text-xs font-semibold text-[#8e8e8e] uppercase tracking-wide py-2 px-2">
                   {t("blendCalculator.percentage")}
                 </th>
+                <th className="text-left text-xs font-semibold text-[#8e8e8e] uppercase tracking-wide py-2 px-2">
+                  {t("calculator.gallons")}
+                </th>
+                <th className="text-left text-xs font-semibold text-[#8e8e8e] uppercase tracking-wide py-2 px-2">
+                  {t("calculator.liters")}
+                </th>
                 <th className="text-left text-xs font-semibold text-[#8e8e8e] uppercase tracking-wide py-2 px-2 w-16">
                   {t("blendCalculator.actions")}
                 </th>
@@ -323,9 +378,30 @@ export function BlendCalculator() {
                         onChange={(val) => updateProduct(product.id, "percentage", val)}
                         placeholder="0.00"
                         className="h-8 text-sm w-24"
+                        decimals={2}
                       />
                       <span className="text-sm text-[#8e8e8e]">%</span>
                     </div>
+                  </td>
+                  <td className="py-2 px-2">
+                    <NumberInput
+                      key={`${product.id}-gal-${totalGallons}-${product.percentage}`}
+                      value={getProductGallons(product.percentage)}
+                      onChange={(val) => updateProductFromGallons(product.id, val)}
+                      placeholder="0.00"
+                      className="h-8 text-sm w-24"
+                      decimals={2}
+                    />
+                  </td>
+                  <td className="py-2 px-2">
+                    <NumberInput
+                      key={`${product.id}-ltr-${totalLiters}-${product.percentage}`}
+                      value={getProductLiters(product.percentage)}
+                      onChange={(val) => updateProductFromLiters(product.id, val)}
+                      placeholder="0.00"
+                      className="h-8 text-sm w-24"
+                      decimals={2}
+                    />
                   </td>
                   <td className="py-2 px-2">
                     <Button
@@ -341,6 +417,40 @@ export function BlendCalculator() {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-[#dbdbdb] bg-[#fafafa]">
+                <td className="py-2 px-2 font-semibold text-sm text-[#262626]">
+                  {t("blendCalculator.total")}
+                </td>
+                <td className="py-2 px-2"></td>
+                <td className="py-2 px-2">
+                  <span className={`text-sm font-bold ${isValidPercentage ? "text-green-600" : "text-red-500"}`}>
+                    {formatNumber(totalPercentage, 2)}%
+                  </span>
+                </td>
+                <td className="py-2 px-2">
+                  <NumberInput
+                    key={`total-gal-${totalGallons}`}
+                    value={totalGallons}
+                    onChange={handleTotalGallonsChange}
+                    placeholder="0.00"
+                    className="h-8 text-sm w-24 font-semibold"
+                    decimals={2}
+                  />
+                </td>
+                <td className="py-2 px-2">
+                  <NumberInput
+                    key={`total-ltr-${totalLiters}`}
+                    value={totalLiters}
+                    onChange={handleTotalLitersChange}
+                    placeholder="0.00"
+                    className="h-8 text-sm w-24 font-semibold"
+                    decimals={2}
+                  />
+                </td>
+                <td className="py-2 px-2"></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
 
@@ -357,20 +467,6 @@ export function BlendCalculator() {
 
       {/* Results Section */}
       <div className="bg-[#fafafa] border border-[#dbdbdb] rounded-md p-4 space-y-3">
-        {/* Total Percentage */}
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-[#262626]">
-            {t("blendCalculator.totalPercentage")}:
-          </span>
-          <span
-            className={`text-sm font-bold ${
-              isValidPercentage ? "text-green-600" : "text-red-500"
-            }`}
-          >
-            {formatNumber(totalPercentage, 2)}%
-          </span>
-        </div>
-
         {!isValidPercentage && (
           <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded px-3 py-2">
             {t("blendCalculator.percentageError")}
@@ -378,7 +474,7 @@ export function BlendCalculator() {
         )}
 
         {/* Blend Price */}
-        <div className="flex justify-between items-center pt-2 border-t border-[#dbdbdb]">
+        <div className="flex justify-between items-center">
           <span className="text-base font-semibold text-[#262626]">
             {t("blendCalculator.blendPrice")}:
           </span>

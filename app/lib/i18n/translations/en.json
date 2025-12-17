@@ -109,6 +109,7 @@
     "percentage": "Percentage",
     "actions": "Actions",
     "addProduct": "Add Product",
+    "total": "Total",
     "totalPercentage": "Total Percentage",
     "percentageError": "Percentages must sum to 100%",
     "blendPrice": "Blend Price",

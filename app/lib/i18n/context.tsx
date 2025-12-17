@@ -35,17 +35,12 @@ function getNestedValue(obj: TranslationValue, keys: string[]): string | undefin
 }
 
 function detectBrowserLanguage(): Language {
-  if (typeof window === "undefined") return "en";
-
-  const browserLang = navigator.language || (navigator as any).userLanguage;
-  if (browserLang?.startsWith("es")) {
-    return "es-MX";
-  }
-  return "en";
+  // Default to Spanish
+  return "es-MX";
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("es-MX");
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Initialize language from localStorage or browser detection
@@ -84,7 +79,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Prevent hydration mismatch by rendering default until hydrated
   if (!isHydrated) {
     return (
-      <LanguageContext.Provider value={{ language: "en", setLanguage, t }}>
+      <LanguageContext.Provider value={{ language: "es-MX", setLanguage, t }}>
         {children}
       </LanguageContext.Provider>
     );
